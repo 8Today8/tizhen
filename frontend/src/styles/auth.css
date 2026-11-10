@@ -1,0 +1,289 @@
+/* 认证页面共享样式：登录、注册与后台登录共用同一张卡片结构。 */
+.auth-card {
+  position: relative;
+  width: min(430px, 100%);
+  padding: 34px 34px 28px;
+  overflow: hidden;
+  border: 1px solid var(--tz-color-border);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--tz-color-surface) 92%, transparent);
+  box-shadow:
+    0 1px 2px rgba(44, 38, 52, 0.04),
+    0 24px 64px rgba(44, 38, 52, 0.1);
+  backdrop-filter: blur(18px);
+  animation: auth-card-in 0.36s ease both;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--tz-color-primary), var(--tz-color-accent));
+  opacity: 0.9;
+}
+
+html[data-theme='dusk'] .auth-card {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 24px 64px rgba(0, 0, 0, 0.38);
+}
+
+.auth-card__badge {
+  display: inline-flex;
+  padding: 5px 10px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--tz-color-primary) 20%, transparent);
+  border-radius: var(--tz-radius-pill);
+  background: var(--tz-color-primary-soft);
+  color: var(--tz-color-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.auth-card__badge .el-icon {
+  font-size: 12px;
+}
+
+.auth-card__head h1 {
+  margin: 16px 0 8px;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.auth-card__desc {
+  margin: 0 0 24px;
+  color: var(--tz-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.auth-alert {
+  margin-bottom: 18px;
+  border-radius: 12px;
+}
+
+.auth-alert.el-alert {
+  align-items: flex-start;
+  padding: 11px 13px;
+}
+
+.auth-alert .el-alert__title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.65;
+}
+
+.auth-alert .el-alert__description {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.auth-form {
+  margin-top: 20px;
+}
+
+.auth-form .el-form-item {
+  margin-bottom: 18px;
+}
+
+.auth-form .el-form-item__label {
+  padding: 0 0 7px;
+  color: var(--tz-color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.auth-form .el-form-item__error {
+  padding-top: 4px;
+  font-size: 11px;
+}
+
+.auth-form .el-input__wrapper {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--tz-color-bg-raised);
+  box-shadow: 0 0 0 1px var(--tz-color-border) inset;
+  transition:
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.auth-form .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--tz-color-border-strong) inset;
+}
+
+.auth-form .el-input__wrapper.is-focus {
+  background: var(--tz-color-surface);
+  box-shadow:
+    0 0 0 1.5px var(--tz-color-primary) inset,
+    0 0 0 4px var(--tz-color-primary-soft);
+}
+
+.auth-form .el-input__inner {
+  color: var(--tz-color-text);
+  font-size: 14px;
+}
+
+.auth-form .el-input__prefix {
+  color: var(--tz-color-text-muted);
+}
+
+.auth-form .el-input__prefix .el-icon {
+  font-size: 16px;
+}
+
+.auth-form__submit.el-button {
+  width: 100%;
+  height: 46px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(
+    100deg,
+    var(--tz-color-primary) 0%,
+    color-mix(in srgb, var(--tz-color-primary) 62%, var(--tz-color-accent)) 100%
+  );
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--tz-color-primary) 26%, transparent);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    filter 0.18s ease;
+}
+
+.auth-form__submit.el-button:not(.is-disabled):hover {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--tz-color-primary) 92%, #ffffff) 0%,
+    color-mix(in srgb, var(--tz-color-primary) 58%, var(--tz-color-accent)) 100%
+  );
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--tz-color-primary) 34%, transparent);
+  filter: saturate(1.06);
+  transform: translateY(-1px);
+}
+
+.auth-form__submit.el-button:not(.is-disabled):active {
+  transform: translateY(0);
+}
+
+.auth-form__submit.is-disabled {
+  opacity: 0.6;
+}
+
+.auth-security {
+  display: flex;
+  margin-top: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.auth-security span {
+  display: inline-flex;
+  padding: 4px 9px;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--tz-radius-pill);
+  background: var(--tz-color-surface-muted);
+  color: var(--tz-color-text-muted);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+.auth-security .el-icon {
+  font-size: 11px;
+  color: var(--tz-color-mint);
+}
+
+.auth-divider {
+  display: flex;
+  margin: 22px 0 16px;
+  align-items: center;
+  gap: 12px;
+  color: var(--tz-color-text-muted);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--tz-color-border);
+}
+
+.auth-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+}
+
+.auth-card__foot a {
+  color: var(--tz-color-primary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+
+.auth-card__foot a:hover {
+  color: color-mix(in srgb, var(--tz-color-primary) 78%, var(--tz-color-accent));
+  text-decoration: underline;
+}
+
+.auth-note {
+  display: flex;
+  padding: 12px 14px;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 20px;
+  border: 1px dashed var(--tz-color-border-strong);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tz-color-surface-muted) 56%, transparent);
+  color: var(--tz-color-text-secondary);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.auth-note .el-icon {
+  margin-top: 2px;
+  flex: none;
+  color: var(--tz-color-primary);
+  font-size: 13px;
+}
+
+@keyframes auth-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 28px 22px 24px;
+    border-radius: 20px;
+  }
+
+  .auth-card__head h1 {
+    font-size: 26px;
+  }
+}

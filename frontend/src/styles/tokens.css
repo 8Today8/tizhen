@@ -1,0 +1,135 @@
+/* 设计令牌：明亮（奶油糖果色）与暗淡（dusk）双主题。Element Plus 变量在此统一覆盖。 */
+:root {
+  color-scheme: light;
+
+  --tz-font-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Microsoft YaHei', sans-serif;
+  --tz-font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+
+  --tz-color-bg: #f6efe3;
+  --tz-color-bg-raised: #faf5ec;
+  --tz-color-surface: #fffcf6;
+  --tz-color-surface-muted: #f1e8d8;
+  --tz-color-text: #2c2634;
+  --tz-color-text-secondary: #635b70;
+  --tz-color-text-muted: #91889d;
+  --tz-color-border: #e6dcc9;
+  --tz-color-border-strong: #d5c6ae;
+
+  --tz-color-primary: #7357e8;
+  --tz-color-primary-soft: #ece7ff;
+  --tz-color-accent: #ff8f6b;
+  --tz-color-accent-soft: #ffe7dc;
+  --tz-color-mint: #2fb59a;
+  --tz-color-mint-soft: #ddf5ee;
+  --tz-color-warning: #d99a2b;
+  --tz-color-danger: #df5c68;
+
+  --tz-radius-sm: 8px;
+  --tz-radius-md: 14px;
+  --tz-radius-lg: 22px;
+  --tz-radius-pill: 999px;
+
+  --tz-shadow-sm: 0 1px 2px rgba(44, 38, 52, 0.05), 0 6px 16px rgba(44, 38, 52, 0.04);
+  --tz-shadow-md: 0 2px 4px rgba(44, 38, 52, 0.04), 0 18px 40px rgba(44, 38, 52, 0.08);
+  --tz-header-height: 64px;
+
+  /* Element Plus */
+  --el-font-family: var(--tz-font-sans);
+  --el-color-primary: #7357e8;
+  --el-color-primary-light-3: #9c86ee;
+  --el-color-primary-light-5: #b9aaf3;
+  --el-color-primary-light-7: #d5ccf8;
+  --el-color-primary-light-8: #e3ddfa;
+  --el-color-primary-light-9: #f1eefc;
+  --el-color-primary-dark-2: #5c46ba;
+  --el-color-success: #2fb59a;
+  --el-color-warning: #d99a2b;
+  --el-color-danger: #df5c68;
+  --el-color-error: #df5c68;
+  --el-color-info: #91889d;
+
+  --el-bg-color: #fffcf6;
+  --el-bg-color-page: #f6efe3;
+  --el-bg-color-overlay: #fffdf9;
+  --el-text-color-primary: #2c2634;
+  --el-text-color-regular: #4d4658;
+  --el-text-color-secondary: #635b70;
+  --el-text-color-placeholder: #a49aaf;
+  --el-text-color-disabled: #b8b0c1;
+  --el-border-color: #e6dcc9;
+  --el-border-color-light: #ece4d5;
+  --el-border-color-lighter: #f1eadd;
+  --el-border-color-extra-light: #f6f0e5;
+  --el-border-color-dark: #d5c6ae;
+  --el-border-color-darker: #c4b298;
+  --el-fill-color: #f3ecdf;
+  --el-fill-color-light: #f7f1e7;
+  --el-fill-color-lighter: #faf5ed;
+  --el-fill-color-blank: #fffcf6;
+  --el-fill-color-dark: #ece3d3;
+  --el-mask-color: rgba(246, 239, 227, 0.76);
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 8px;
+  --el-box-shadow-light: var(--tz-shadow-sm);
+}
+
+html[data-theme='dusk'] {
+  color-scheme: dark;
+
+  --tz-color-bg: #14151a;
+  --tz-color-bg-raised: #1a1c22;
+  --tz-color-surface: #20232b;
+  --tz-color-surface-muted: #282c35;
+  --tz-color-text: #e9e6e1;
+  --tz-color-text-secondary: #a8aab6;
+  --tz-color-text-muted: #7c7f8c;
+  --tz-color-border: #313540;
+  --tz-color-border-strong: #424754;
+
+  --tz-color-primary: #9b8cff;
+  --tz-color-primary-soft: #2d2a45;
+  --tz-color-accent: #e8a087;
+  --tz-color-accent-soft: #3a2b27;
+  --tz-color-mint: #6fc9b4;
+  --tz-color-mint-soft: #1f3733;
+  --tz-color-warning: #d9b06a;
+  --tz-color-danger: #e0808a;
+
+  --tz-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28), 0 6px 16px rgba(0, 0, 0, 0.24);
+  --tz-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.24), 0 18px 40px rgba(0, 0, 0, 0.34);
+
+  --el-color-primary: #9b8cff;
+  --el-color-primary-light-3: #b3a8ff;
+  --el-color-primary-light-5: #c6beff;
+  --el-color-primary-light-7: #d9d4ff;
+  --el-color-primary-light-8: #e3dfff;
+  --el-color-primary-light-9: #2d2a45;
+  --el-color-primary-dark-2: #7c6fcc;
+  --el-color-success: #6fc9b4;
+  --el-color-warning: #d9b06a;
+  --el-color-danger: #e0808a;
+  --el-color-error: #e0808a;
+  --el-color-info: #8b8e9b;
+
+  --el-bg-color: #20232b;
+  --el-bg-color-page: #14151a;
+  --el-bg-color-overlay: #242731;
+  --el-text-color-primary: #e9e6e1;
+  --el-text-color-regular: #c6c4bf;
+  --el-text-color-secondary: #a8aab6;
+  --el-text-color-placeholder: #7c7f8c;
+  --el-text-color-disabled: #61646f;
+  --el-border-color: #313540;
+  --el-border-color-light: #2b2f39;
+  --el-border-color-lighter: #282c35;
+  --el-border-color-extra-light: #242731;
+  --el-border-color-dark: #424754;
+  --el-border-color-darker: #4d5260;
+  --el-fill-color: #262a33;
+  --el-fill-color-light: #22252d;
+  --el-fill-color-lighter: #1e2129;
+  --el-fill-color-blank: #20232b;
+  --el-fill-color-dark: #2b2f39;
+  --el-mask-color: rgba(20, 21, 26, 0.78);
+}

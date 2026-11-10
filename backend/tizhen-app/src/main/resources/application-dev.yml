@@ -1,0 +1,11 @@
+# 本地开发：接口文档开启，日志更详细；生产环境不要启用 dev profile。
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+logging:
+  level:
+    com.tizhen: DEBUG
+    org.springframework.security: INFO

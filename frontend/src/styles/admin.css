@@ -1,0 +1,210 @@
+/* 运营后台页面骨架：统一页头、筛选栏、表格卡片、空状态与分页的视觉规范。 */
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-page__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-page__heading {
+  min-width: 0;
+}
+
+.admin-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-table-card {
+  overflow: hidden;
+  border: 1px solid var(--tz-color-border);
+  border-radius: var(--tz-radius-md);
+  background: var(--tz-color-surface);
+  box-shadow: var(--tz-shadow-sm);
+}
+
+.admin-table-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 0;
+}
+
+.admin-table-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-table-card__desc {
+  margin: 6px 0 0;
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.admin-table-card__head-extra {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-table-card__toolbar {
+  padding: 16px 20px;
+}
+
+.admin-table-card__head + .admin-table-card__toolbar {
+  padding-top: 12px;
+}
+
+.admin-table-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 1px solid var(--tz-color-border);
+}
+
+.admin-table-card .el-table {
+  --el-table-border-color: var(--tz-color-border);
+  --el-table-header-bg-color: var(--tz-color-surface-muted);
+  --el-table-tr-bg-color: var(--tz-color-surface);
+  --el-table-row-hover-bg-color: var(--tz-color-primary-soft);
+}
+
+.admin-table-card .el-table th.el-table__cell {
+  color: var(--tz-color-text-secondary);
+  font-weight: 600;
+}
+
+.admin-table-card .el-table .cell {
+  line-height: 1.5;
+}
+
+.admin-table-card .el-table__empty-block {
+  min-height: 220px;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-toolbar__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--tz-color-text-muted);
+  font-size: 13px;
+}
+
+.admin-search {
+  width: 260px;
+}
+
+.admin-filter {
+  width: 140px;
+}
+
+.admin-pagination {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.admin-empty {
+  padding: 4px 0;
+}
+
+.admin-empty .el-empty__description p {
+  color: var(--tz-color-text-muted);
+  font-size: 13px;
+}
+
+.admin-page-tabs .el-tabs__header {
+  margin-bottom: 0;
+}
+
+.admin-page-tabs .el-tabs__nav-wrap::after {
+  background-color: var(--tz-color-border);
+}
+
+.admin-inline-link {
+  color: var(--tz-color-primary);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.admin-inline-link:hover {
+  text-decoration: underline;
+}
+
+/* 后台详情抽屉统一留白，窄屏下占满整屏。 */
+.admin-detail-drawer .el-drawer__header {
+  margin-bottom: 0;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--tz-color-border);
+  color: var(--tz-color-text);
+  font-weight: 600;
+}
+
+.admin-detail-drawer .el-drawer__body {
+  padding: 20px 24px 28px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .admin-detail-drawer.el-drawer {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-table-card__head,
+  .admin-table-card__toolbar {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .admin-table-card__footer {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-search,
+  .admin-filter {
+    width: 100%;
+  }
+
+  .admin-toolbar__filters {
+    width: 100%;
+  }
+}

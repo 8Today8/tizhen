@@ -1,0 +1,9 @@
+/* 明亮主题装饰令牌：奶油底色搭配糖果色光晕。 */
+:root {
+  --tz-header-bg: rgba(250, 245, 236, 0.84);
+  --tz-hero-gradient:
+    radial-gradient(120% 140% at 10% 6%, #efe6ff 0%, transparent 55%),
+    radial-gradient(120% 120% at 94% 16%, #ffe9db 0%, transparent 58%),
+    linear-gradient(140deg, #fffdf8 0%, #f7eddd 100%);
+  --tz-auth-brand-bg: linear-gradient(150deg, #f7edff 0%, #f6efe3 50%, #ffe9dc 100%);
+}

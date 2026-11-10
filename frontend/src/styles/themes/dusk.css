@@ -1,0 +1,9 @@
+/* 暗淡主题装饰令牌：低饱和暮色，避免纯黑造成的高对比疲劳。 */
+html[data-theme='dusk'] {
+  --tz-header-bg: rgba(20, 21, 26, 0.84);
+  --tz-hero-gradient:
+    radial-gradient(120% 140% at 8% 4%, rgba(124, 106, 214, 0.2) 0%, transparent 56%),
+    radial-gradient(120% 120% at 94% 12%, rgba(196, 126, 104, 0.14) 0%, transparent 58%),
+    linear-gradient(140deg, #1c1d25 0%, #15161c 100%);
+  --tz-auth-brand-bg: linear-gradient(150deg, #201c2d 0%, #15161b 52%, #241d24 100%);
+}

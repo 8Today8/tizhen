@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="题阵">
+  <defs>
+    <linearGradient id="tizhen-mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7357e8" />
+      <stop offset="1" stop-color="#ff8f6b" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#tizhen-mark)" />
+  <path
+    d="M18 20h28M32 20v24M18 44h28"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="5"
+    stroke-linecap="round"
+  />
+</svg>

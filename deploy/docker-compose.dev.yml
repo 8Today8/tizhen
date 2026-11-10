@@ -1,0 +1,86 @@
+name: tizhen-dev
+
+# 题阵本地开发基础设施
+# 仅包含 MySQL 8.4 LTS 与 Redis 7.4.x。
+# app/worker/nginx/go-judge 待后端、前端镜像与沙箱参数确定后加入完整编排。
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: tizhen-mysql
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tizhen}
+      MYSQL_USER: ${MYSQL_USER:-tizhen}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+    # Windows bind mount 的配置文件常被识别为 world-writable，MySQL 会直接忽略；
+    # 因此关键参数直接作为 mysqld 启动参数传入，避免字符集/时区配置失效。
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+00:00
+    ports:
+      # 只绑定本机，避免数据库暴露到局域网
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 表结构由后端启动时的 Flyway 管理；此处不再挂载建表脚本。
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    stop_grace_period: 1m
+    networks:
+      - data-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: tizhen-redis
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    command:
+      - sh
+      - -c
+      - exec redis-server /usr/local/etc/redis/redis.conf --requirepass "$$REDIS_PASSWORD"
+    ports:
+      # 只绑定本机，避免 Redis 暴露到局域网
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    stop_grace_period: 30s
+    networks:
+      - data-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  data-net:
+    name: tizhen-data-net
+    driver: bridge
+
+volumes:
+  mysql-data:
+    name: tizhen-mysql-data
+  redis-data:
+    name: tizhen-redis-data
