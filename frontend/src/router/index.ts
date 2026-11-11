@@ -30,49 +30,103 @@ const routes: RouteRecordRaw[] = [
         path: 'learning',
         name: 'learning',
         component: () => import('@/views/learning/LearningRoutesView.vue'),
-        meta: { title: '学习路线' }
+        meta: { title: '学习路线', requiresAuth: true }
+      },
+      {
+        path: 'learning/routes/:routeId',
+        name: 'learning-route-detail',
+        component: () => import('@/views/learning/LearningRouteDetailView.vue'),
+        meta: { title: '路线详情', requiresAuth: true }
+      },
+      {
+        path: 'learning/stages/:stageId',
+        name: 'learning-stage-detail',
+        component: () => import('@/views/learning/LearningStageDetailView.vue'),
+        meta: { title: '阶段详情', requiresAuth: true }
       },
       {
         path: 'problems',
         name: 'problems',
         component: () => import('@/views/problems/ProblemsView.vue'),
-        meta: { title: '题库' }
+        meta: { title: '题库', requiresAuth: true }
+      },
+      {
+        path: 'problems/:problemId',
+        name: 'problem-detail',
+        component: () => import('@/views/problems/ProblemDetailView.vue'),
+        meta: { title: '题目详情', requiresAuth: true }
       },
       {
         path: 'leaderboard',
         name: 'leaderboard',
         component: () => import('@/views/leaderboard/LeaderboardView.vue'),
-        meta: { title: '榜单' }
+        meta: { title: '榜单', requiresAuth: true }
       },
       {
         path: 'battle',
         name: 'battle',
         component: () => import('@/views/battle/BattleLobbyView.vue'),
-        meta: { title: '对战' }
+        meta: { title: '对战', requiresAuth: true }
+      },
+      {
+        path: 'battle/rooms/:roomId',
+        name: 'battle-room',
+        component: () => import('@/views/battle/BattleRoomView.vue'),
+        meta: { title: '对战房间', requiresAuth: true }
+      },
+      {
+        path: 'battle/join/:roomCode',
+        name: 'battle-join',
+        component: () => import('@/views/battle/BattleJoinView.vue'),
+        meta: { title: '加入对战', requiresAuth: true }
+      },
+      {
+        path: 'battle/records',
+        name: 'battle-records',
+        component: () => import('@/views/battle/BattleRecordsView.vue'),
+        meta: { title: '对战记录', requiresAuth: true }
+      },
+      {
+        path: 'battle/records/:roomId',
+        name: 'battle-record-detail',
+        component: () => import('@/views/battle/BattleRecordDetailView.vue'),
+        meta: { title: '对战记录详情', requiresAuth: true }
       },
       {
         path: 'datagen',
         name: 'datagen',
         component: () => import('@/views/datagen/DatagenWorkbenchView.vue'),
-        meta: { title: 'AI 造数据' }
+        meta: { title: 'AI 造数据', requiresAuth: true }
+      },
+      {
+        path: 'datagen/tasks',
+        name: 'datagen-tasks',
+        component: () => import('@/views/datagen/DatagenTasksView.vue'),
+        meta: { title: '造数据任务', requiresAuth: true }
+      },
+      {
+        path: 'datagen/tasks/:taskId',
+        name: 'datagen-task-detail',
+        component: () => import('@/views/datagen/DatagenTaskDetailView.vue'),
+        meta: { title: '造数据任务详情', requiresAuth: true }
       },
       {
         path: 'records',
         name: 'records',
         component: () => import('@/views/records/LearningRecordsView.vue'),
-        meta: { title: '学习记录' }
+        meta: { title: '学习记录', requiresAuth: true }
       },
       {
         path: 'wrongbook',
         name: 'wrongbook',
         component: () => import('@/views/records/WrongBookView.vue'),
-        meta: { title: '错题本' }
+        meta: { title: '错题本', requiresAuth: true }
       },
       {
         path: 'profile',
         name: 'profile',
         component: () => import('@/views/profile/ProfileView.vue'),
-        meta: { title: '个人中心' }
+        meta: { title: '个人中心', requiresAuth: true }
       },
       {
         path: 'xcpc',
@@ -96,15 +150,11 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/register',
-    component: AuthLayout,
-    children: [
-      {
-        path: '',
-        name: 'register',
-        component: () => import('@/views/auth/RegisterView.vue'),
-        meta: { title: '注册账号' }
-      }
-    ]
+    name: 'register',
+    redirect: (to) => ({
+      name: 'login',
+      query: { ...to.query, tab: 'register' }
+    })
   },
   {
     path: '/admin/login',
@@ -235,6 +285,23 @@ router.beforeEach(async (to) => {
   // 仅做前端导航拦截，真正的权限校验仍由后端服务执行。
   if (to.meta.requiresSuperAdmin && authStore.admin?.roleCode !== 'super_admin') {
     return { name: 'admin-dashboard' }
+  }
+
+  if (to.path.startsWith('/admin')) {
+    return true
+  }
+
+  await authStore.hydratePlayer()
+
+  if ((to.name === 'login' || to.name === 'register') && authStore.isAuthenticated) {
+    return { path: '/' }
+  }
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return {
+      name: 'login',
+      query: { redirect: to.fullPath }
+    }
   }
 
   return true

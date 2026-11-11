@@ -21,3 +21,22 @@ export function formatDateTime(isoString: string): string {
 
   return `${pick('year')}-${pick('month')}-${pick('day')} ${pick('hour')}:${pick('minute')}:${pick('second')}`
 }
+
+/**
+ * 课程时长以秒存储，展示为易读的中文时长。
+ */
+export function formatDuration(seconds: number | null): string {
+  if (seconds === null || seconds === undefined || seconds < 0) {
+    return '时长未知'
+  }
+  if (seconds < 60) {
+    return `${seconds} 秒`
+  }
+
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  if (hours > 0) {
+    return minutes > 0 ? `${hours} 小时 ${minutes} 分钟` : `${hours} 小时`
+  }
+  return `${minutes} 分钟`
+}

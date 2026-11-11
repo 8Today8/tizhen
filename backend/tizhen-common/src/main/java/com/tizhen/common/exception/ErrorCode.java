@@ -45,6 +45,7 @@ public enum ErrorCode {
     EXTERNAL_HANDLE_TAKEN(HttpStatus.CONFLICT, "外部账号已被其他用户绑定"),
     EXTERNAL_ACCOUNT_ALREADY_BOUND(HttpStatus.CONFLICT, "当前用户已绑定该平台账号"),
     EXTERNAL_ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "外部账号不存在或已解绑"),
+    EXTERNAL_CF_UNAVAILABLE(HttpStatus.BAD_GATEWAY, "Codeforces 数据获取失败，请稍后重试"),
     MANUAL_DECLARATION_NOT_FOUND(HttpStatus.NOT_FOUND, "申报记录不存在"),
     MANUAL_DECLARATION_WEEK_LOCKED(HttpStatus.CONFLICT, "非当前周不可修改申报"),
 

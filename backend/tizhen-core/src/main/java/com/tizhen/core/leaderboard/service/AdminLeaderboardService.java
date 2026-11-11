@@ -57,7 +57,8 @@ public class AdminLeaderboardService {
         int safePage = Math.max(page, 1);
         int safePageSize = pageSize <= 0 ? DEFAULT_PAGE_SIZE : Math.min(pageSize, MAX_PAGE_SIZE);
         Page<LeaderboardRow> result = new Page<>(safePage, safePageSize);
-        leaderboardMapper.selectAdminLeaderboard(result, week, weekStartDate, weekStartAt, weekEndAt);
+        leaderboardMapper.selectLeaderboard(
+                result, week, weekStartDate, weekStartAt, weekEndAt, null);
 
         List<LeaderboardItem> items = result.getRecords().stream()
                 .map(this::toItem)

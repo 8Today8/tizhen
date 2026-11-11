@@ -29,8 +29,12 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authenticationException) throws IOException {
-        ErrorCode errorCode = Boolean.TRUE.equals(
+        boolean sessionExpired = Boolean.TRUE.equals(
                 request.getAttribute(AdminSessionAuthenticationFilter.SESSION_EXPIRED_ATTRIBUTE))
+                || Boolean.TRUE.equals(
+                request.getAttribute(PlayerSessionTimeoutFilter.SESSION_EXPIRED_ATTRIBUTE))
+                || (request.getRequestedSessionId() != null && !request.isRequestedSessionIdValid());
+        ErrorCode errorCode = sessionExpired
                 ? ErrorCode.AUTH_SESSION_EXPIRED
                 : ErrorCode.COMMON_UNAUTHENTICATED;
 

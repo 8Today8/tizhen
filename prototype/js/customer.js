@@ -607,11 +607,19 @@
 
   C.openEditProfile = function () {
     const user = TZ.currentUser();
+    const preview = TZ.avatar({ id: user.id, name: user.name, avatar: user.avatar, avatarUrl: user.avatarUrl }, 64);
     const body = '<form data-form="profile" class="form-stack">' +
+      '<div class="field"><label class="label">头像</label>' +
+      '<div class="avatar-upload" data-avatar-drop><span id="profile-avatar-preview">' + preview + '</span>' +
+      '<div class="avatar-upload-info"><strong>拖拽图片到这里，或 <button type="button" class="link" data-action="pick-avatar">选择图片</button></strong>' +
+      '<span>支持 JPG / PNG，不超过 2MB；保存前会在本地压缩预览。</span>' +
+      '<button type="button" class="btn btn-ghost btn-sm danger" data-action="remove-avatar">移除头像</button></div>' +
+      '<input id="profile-avatar-file" type="file" accept="image/jpeg,image/png" hidden /></div>' +
+      '<input type="hidden" name="avatarUrl" id="profile-avatar-url" value="' + TZ.esc(user.avatarUrl || '') + '" /></div>' +
       '<div class="field"><label class="label">昵称</label><input class="input" name="name" value="' + TZ.esc(user.name) + '" maxlength="20" /></div>' +
       '<div class="field"><label class="label">学校</label><input class="input" name="school" value="' + TZ.esc(user.school || '') + '" maxlength="40" placeholder="例如 示例大学" /></div>' +
       '<div class="field"><label class="label">邮箱</label><input class="input" name="email" type="email" value="' + TZ.esc(user.email || '') + '" placeholder="name@example.com" /></div>' +
-      '<div class="hint">昵称、头像与学校会展示在榜单与对战房间中。头像首期自动取昵称首字。</div>' +
+      '<div class="hint">昵称、头像与学校会展示在榜单与对战房间中；未上传头像时使用昵称首字。</div>' +
       '<div class="modal-actions"><button type="button" class="btn btn-outline" data-action="close-modal">取消</button><button type="submit" class="btn btn-primary">保存</button></div>' +
       '</form>';
     TZ.modal({ title: '编辑个人资料', body: body });
@@ -1009,8 +1017,8 @@
       '<div class="profile-identity"><h2>' + TZ.esc(user.name) + '</h2><p>' + TZ.esc(user.school || '未填写学校') + '</p><div class="profile-badges">' + TZ.badge('选手', 'indigo') + (user.cfHandle ? TZ.badge('CF 已绑定', 'green') : TZ.badge('CF 未绑定', 'slate')) + TZ.badge('加入于 ' + TZ.fmtDate(user.joinedAt, false), 'slate') + '</div></div></div>' +
       '<div class="profile-stats"><div><strong>' + (me ? me.rank : '-') + '</strong><span>本周排名</span></div><div><strong>' + acCount + '</strong><span>累计 AC</span></div><div><strong>' + doneStages + '</strong><span>完成阶段</span></div><div><strong>' + wrongCount + '</strong><span>错题待复盘</span></div></div></div>' +
       '<div class="card card-pad"><div class="section-head compact"><h3>Codeforces 绑定</h3>' + (user.cfHandle ? TZ.badge('已绑定', 'green') : TZ.badge('未绑定', 'slate')) + '</div>' +
-      (user.cfHandle ? '<div class="cf-account"><div class="cf-account-icon">CF</div><div><strong>' + TZ.esc(user.cfHandle) + '</strong><span>本周模拟同步过题 ' + cfCount + ' 道</span></div><span class="badge badge-green">校验通过</span></div>'
-        : '<p class="muted">绑定 Codeforces 后自动同步本周过题数（演示环境使用白名单模拟）。</p>') +
+      (user.cfHandle ? '<div class="cf-account"><div class="cf-account-icon">CF</div><div><strong>' + TZ.esc(user.cfHandle) + '</strong><span>本周同步过题 ' + cfCount + ' 道</span></div><span class="badge badge-green">校验通过</span></div>'
+        : '<p class="muted">绑定 Codeforces 后自动同步本周过题数。</p>') +
       '<div class="flex gap-8 section"><button class="btn btn-soft btn-sm" data-action="open-cf">' + (user.cfHandle ? '更换绑定' : '绑定 CF') + '</button>' + (user.cfHandle ? '<button class="btn btn-ghost btn-sm danger" data-action="unbind-cf">解绑</button>' : '') + '</div>' +
       '<p class="hint">解绑后历史数据保留，但不再更新。</p></div>' +
       '<div class="card card-pad"><div class="section-head compact"><h3>LLM 造数据凭证</h3>' + (cred ? TZ.badge(cred.status === 'valid' ? '有效' : '已失效', cred.status === 'valid' ? 'green' : 'red') : TZ.badge('未配置', 'slate')) + '</div>' +

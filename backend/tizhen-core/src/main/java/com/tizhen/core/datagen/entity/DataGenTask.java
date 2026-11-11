@@ -41,6 +41,10 @@ public class DataGenTask {
 
     private String llmModel;
 
+    private Long llmCredentialId;
+
+    private String generatorCode;
+
     private String generatorStatus;
 
     private String llmDataStatus;
@@ -57,15 +61,21 @@ public class DataGenTask {
 
     private Integer memoryLimitMb;
 
+    private Integer attempts;
+
     private LocalDateTime startedAt;
 
     private LocalDateTime finishedAt;
+
+    private LocalDateTime heartbeatAt;
 
     private LocalDateTime filesExpireAt;
 
     private LocalDateTime filesCleanedAt;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 
     public Long getId() {
         return id;
@@ -179,6 +189,22 @@ public class DataGenTask {
         this.llmModel = llmModel;
     }
 
+    public Long getLlmCredentialId() {
+        return llmCredentialId;
+    }
+
+    public void setLlmCredentialId(Long llmCredentialId) {
+        this.llmCredentialId = llmCredentialId;
+    }
+
+    public String getGeneratorCode() {
+        return generatorCode;
+    }
+
+    public void setGeneratorCode(String generatorCode) {
+        this.generatorCode = generatorCode;
+    }
+
     public String getGeneratorStatus() {
         return generatorStatus;
     }
@@ -243,6 +269,14 @@ public class DataGenTask {
         this.memoryLimitMb = memoryLimitMb;
     }
 
+    public Integer getAttempts() {
+        return attempts;
+    }
+
+    public void setAttempts(Integer attempts) {
+        this.attempts = attempts;
+    }
+
     public LocalDateTime getStartedAt() {
         return startedAt;
     }
@@ -281,5 +315,21 @@ public class DataGenTask {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getHeartbeatAt() {
+        return heartbeatAt;
+    }
+
+    public void setHeartbeatAt(LocalDateTime heartbeatAt) {
+        this.heartbeatAt = heartbeatAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

@@ -56,7 +56,7 @@ const reviewForm = reactive<{
 const rankingTitle = computed(() => (activeTab.value === 'week' ? '周榜排名' : '总榜排名'))
 const rankingDescription = computed(() =>
   activeTab.value === 'week'
-    ? '本周站内首次 AC + CF 模拟同步 + 审核通过的手动申报；总分相同按站内过题数降序。'
+    ? '本周站内首次 AC + CF API 同步 + 审核通过的手动申报；总分相同按站内过题数降序。'
     : '历史累计站内首次 AC + CF 历史过题 + 审核通过的手动申报；只读视图，不提供改分入口。'
 )
 const rankingMeta = computed(() => {
@@ -194,8 +194,8 @@ async function submitReview() {
 async function handleSyncCf() {
   try {
     await ElMessageBox.confirm(
-      '将模拟刷新全部有效 CF 账号的周过题数与历史过题数，不会影响站内成绩。确认执行吗？',
-      '刷新 CF 模拟数据',
+      '将通过 Codeforces 公共 API 刷新全部有效 CF 账号的周过题数与历史过题数，不会影响站内成绩。确认执行吗？',
+      '刷新 CF 数据',
       {
         confirmButtonText: '开始刷新',
         cancelButtonText: '取消',
@@ -214,7 +214,7 @@ async function handleSyncCf() {
       void loadRanking()
     }, 1200)
   } catch (error) {
-    ElMessage.error(resolveApiErrorMessage(error, '刷新 CF 模拟数据失败'))
+    ElMessage.error(resolveApiErrorMessage(error, '刷新 CF 数据失败'))
   } finally {
     syncing.value = false
   }
@@ -264,7 +264,7 @@ onMounted(() => {
 <template>
   <AdminPage
     title="榜单管理"
-    description="同页查看周榜与总榜、手动申报记录并审核；总榜为只读视图，申报审核与 CF 模拟数据刷新仅超级管理员可操作。"
+    description="同页查看周榜与总榜、手动申报记录并审核；总榜为只读视图，申报审核与 CF 数据刷新仅超级管理员可操作。"
   >
     <template #actions>
       <el-tag type="info" effect="plain">榜单实时派生，不支持改分</el-tag>
@@ -276,7 +276,7 @@ onMounted(() => {
         :loading="syncing"
         @click="handleSyncCf"
       >
-        刷新 CF 模拟数据
+        刷新 CF 数据
       </el-button>
     </template>
 

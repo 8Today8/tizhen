@@ -1,7 +1,7 @@
 /**
  * 自定义校验注解与约束校验器。
  * <p>
- * 当前骨架只使用 Jakarta Validation 标准注解；账号、题库等模块的跨字段规则
- * 在对应模块开发时补充。
+ * 通用格式与范围校验使用 Jakarta Validation 标准注解；需要结合数据库状态的
+ * 跨字段规则由服务层负责。
  */
 package com.tizhen.common.validation;

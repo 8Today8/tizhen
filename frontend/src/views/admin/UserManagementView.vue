@@ -20,10 +20,13 @@ import {
   fetchAdminUserDetail,
   fetchAdminUsers,
   resetAdminUserPassword,
+  updateAdminUserAvatar,
   updateAdminUserStatus,
+  uploadAdminAvatar,
   type AdminUserDetail,
   type AdminUserSummary
 } from '@/api/admin'
+import AvatarUploader from '@/components/base/AvatarUploader.vue'
 import AdminEmptyState from '@/components/admin/AdminEmptyState.vue'
 import AdminPage from '@/components/admin/AdminPage.vue'
 import AdminPagination from '@/components/admin/AdminPagination.vue'
@@ -52,6 +55,7 @@ const detail = ref<AdminUserDetail | null>(null)
 
 const createVisible = ref(false)
 const createSubmitting = ref(false)
+const createAvatarUploading = ref(false)
 const createFormRef = ref<FormInstance>()
 const createForm = reactive({
   username: '',
@@ -60,7 +64,8 @@ const createForm = reactive({
   confirmPassword: '',
   email: '',
   phone: '',
-  school: ''
+  school: '',
+  avatarUrl: null as string | null
 })
 const createRules: FormRules = {
   username: [
@@ -221,6 +226,8 @@ function openCreateDialog() {
   createForm.email = ''
   createForm.phone = ''
   createForm.school = ''
+  createForm.avatarUrl = null
+  createAvatarUploading.value = false
   createVisible.value = true
   createFormRef.value?.clearValidate()
 }
@@ -242,7 +249,8 @@ async function submitCreate() {
       password: createForm.password,
       email: createForm.email.trim() || undefined,
       phone: createForm.phone.trim() || undefined,
-      school: createForm.school.trim() || undefined
+      school: createForm.school.trim() || undefined,
+      avatarUrl: createForm.avatarUrl || undefined
     })
     createVisible.value = false
     page.value = 1
@@ -252,6 +260,21 @@ async function submitCreate() {
     ElMessage.error(resolveApiErrorMessage(error, '用户创建失败'))
   } finally {
     createSubmitting.value = false
+  }
+}
+
+async function handleDetailAvatarChange(avatarUrl: string | null) {
+  if (!detail.value) {
+    return
+  }
+  const userId = detail.value.user.id
+  try {
+    const updated = await updateAdminUserAvatar(userId, avatarUrl)
+    detail.value = { ...detail.value, user: updated }
+    ElMessage.success(avatarUrl ? '头像已更新' : '头像已移除')
+    await loadUsers()
+  } catch (error) {
+    ElMessage.error(resolveApiErrorMessage(error, '头像更新失败'))
   }
 }
 
@@ -547,6 +570,14 @@ onMounted(loadUsers)
 
     <el-dialog v-model="createVisible" title="新增用户" width="520px" destroy-on-close>
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="92px">
+        <el-form-item label="头像">
+          <AvatarUploader
+            v-model="createForm.avatarUrl"
+            :uploader="uploadAdminAvatar"
+            :size="76"
+            @update:uploading="createAvatarUploading = $event"
+          />
+        </el-form-item>
         <el-form-item label="用户名" prop="username">
           <el-input v-model="createForm.username" maxlength="20" placeholder="3–20 位字母、数字或下划线" />
         </el-form-item>
@@ -577,7 +608,14 @@ onMounted(loadUsers)
       </el-form>
       <template #footer>
         <el-button @click="createVisible = false">取消</el-button>
-        <el-button type="primary" :loading="createSubmitting" @click="submitCreate">创建用户</el-button>
+        <el-button
+          type="primary"
+          :loading="createSubmitting"
+          :disabled="createAvatarUploading"
+          @click="submitCreate"
+        >
+          创建用户
+        </el-button>
       </template>
     </el-dialog>
 
@@ -617,10 +655,13 @@ onMounted(loadUsers)
       <div v-loading="detailLoading" class="admin-user-detail">
         <template v-if="detail">
           <div class="admin-user-detail__head">
-            <el-avatar :size="52" :src="detail.user.avatarUrl || undefined">
-              {{ detail.user.nickname?.slice(0, 1) }}
-            </el-avatar>
-            <div>
+            <AvatarUploader
+              :model-value="detail.user.avatarUrl"
+              :uploader="uploadAdminAvatar"
+              :size="60"
+              @update:model-value="handleDetailAvatarChange"
+            />
+            <div class="admin-user-detail__identity">
               <h3>{{ detail.user.nickname }}</h3>
               <p>{{ detail.user.username }} · ID {{ detail.user.id }}</p>
             </div>
@@ -772,7 +813,7 @@ onMounted(loadUsers)
   gap: 12px;
 }
 
-.admin-user-detail__head > div {
+.admin-user-detail__identity {
   min-width: 0;
   flex: 1;
 }

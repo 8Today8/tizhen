@@ -29,6 +29,9 @@ public record CreateUserRequest(
         String phone,
 
         @Size(max = 128, message = "学校不能超过 128 个字符")
-        String school
+        String school,
+
+        @Size(max = 512, message = "头像地址不能超过 512 个字符")
+        String avatarUrl
 ) {
 }

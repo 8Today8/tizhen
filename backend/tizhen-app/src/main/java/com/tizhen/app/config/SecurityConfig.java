@@ -1,6 +1,7 @@
 package com.tizhen.app.config;
 
 import com.tizhen.app.config.security.AdminSessionAuthenticationFilter;
+import com.tizhen.app.config.security.PlayerSessionTimeoutFilter;
 import com.tizhen.app.config.security.RestAccessDeniedHandler;
 import com.tizhen.app.config.security.RestAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,7 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
@@ -79,6 +82,9 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain apiSecurityFilterChain(
             HttpSecurity http,
+            PlayerSessionTimeoutFilter playerSessionTimeoutFilter,
+            SecurityContextRepository playerSecurityContextRepository,
+            @Qualifier("playerCsrfTokenRepository") CookieCsrfTokenRepository playerCsrfTokenRepository,
             RestAuthenticationEntryPoint authenticationEntryPoint,
             RestAccessDeniedHandler accessDeniedHandler) throws Exception {
 
@@ -87,13 +93,25 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/media/avatar/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/logout").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/ws/**").authenticated()
                         .anyRequest().denyAll())
+                // SPA 从 Cookie 读取原始 Token 后放入请求头，需要非 XOR 的解析方式。
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+                        .csrfTokenRepository(playerCsrfTokenRepository)
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+                .securityContext(context -> context
+                        .securityContextRepository(playerSecurityContextRepository))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .requestCache(AbstractHttpConfigurer::disable)
+                .addFilterBefore(playerSessionTimeoutFilter, AnonymousAuthenticationFilter.class)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
@@ -102,6 +120,30 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable);
 
         return http.build();
+    }
+
+    @Bean
+    public SecurityContextRepository playerSecurityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
+
+    @Bean("playerCsrfTokenRepository")
+    public CookieCsrfTokenRepository playerCsrfTokenRepository(
+            @Value("${tizhen.security.player.csrf.cookie-name:XSRF-TOKEN}") String cookieName,
+            @Value("${tizhen.security.player.csrf.header-name:X-XSRF-TOKEN}") String headerName,
+            @Value("${server.servlet.session.cookie.secure:false}") boolean secure) {
+        CookieCsrfTokenRepository repository = new CookieCsrfTokenRepository();
+        repository.setCookieName(cookieName);
+        repository.setHeaderName(headerName);
+        repository.setCookiePath("/");
+        repository.setCookieHttpOnly(false);
+        repository.setCookieCustomizer(builder -> {
+            builder.sameSite("Lax");
+            if (secure) {
+                builder.secure(true);
+            }
+        });
+        return repository;
     }
 
     @Bean("adminCsrfTokenRepository")
@@ -130,6 +172,15 @@ public class SecurityConfig {
     public FilterRegistrationBean<AdminSessionAuthenticationFilter> adminSessionFilterRegistration(
             AdminSessionAuthenticationFilter filter) {
         FilterRegistrationBean<AdminSessionAuthenticationFilter> registration =
+                new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<PlayerSessionTimeoutFilter> playerSessionTimeoutFilterRegistration(
+            PlayerSessionTimeoutFilter filter) {
+        FilterRegistrationBean<PlayerSessionTimeoutFilter> registration =
                 new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;

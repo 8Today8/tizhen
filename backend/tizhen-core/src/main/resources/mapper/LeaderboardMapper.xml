@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tizhen.core.leaderboard.mapper.LeaderboardMapper">
+
+    <!--
+      周榜与总榜共用同一聚合结构：
+      1. CF 只统计当前有效绑定，解绑后的账号不再计入分数；
+      2. 站内只统计 first_ac，周榜按北京时间自然周换算为 UTC 区间过滤；
+      3. 手动申报只统计有效且审核通过的记录；
+      4. 排名使用 RANK()，总分降序、站内过题降序，同分并列。
+    -->
+    <sql id="leaderboardCte">
+        WITH cf AS (
+          SELECT ea.user_id, ea.handle, ea.verification_status, ea.data_source, ea.last_sync_at,
+                 ea.weekly_count, ea.weekly_week_start, ea.all_time_count
+          FROM external_account ea
+          WHERE ea.platform = 'codeforces'
+            AND ea.active_flag = 1
+            AND ea.status = 'active'
+        ),
+        internal AS (
+          SELECT fa.user_id, COUNT(*) AS solved
+          FROM first_ac fa
+          <if test="week">
+            WHERE fa.first_ac_at &gt;= #{weekStartAt} AND fa.first_ac_at &lt; #{weekEndAt}
+          </if>
+          GROUP BY fa.user_id
+        ),
+        manual AS (
+          SELECT md.user_id, SUM(md.count) AS solved,
+                 COUNT(*) AS declaration_count,
+                 MAX(md.updated_at) AS manual_updated_at
+          FROM manual_declaration md
+          WHERE md.active_flag = 1 AND md.verification_status = 'verified'
+          <if test="week">
+            AND md.week_start_date = #{weekStartDate}
+          </if>
+          GROUP BY md.user_id
+        ),
+        base AS (
+          SELECT u.id, u.username, u.nickname, u.avatar_url, u.school, u.email,
+                 COALESCE(i.solved, 0) AS internal_solved,
+                 COALESCE(
+                   <choose>
+                     <when test="week">
+                       CASE WHEN cf.weekly_week_start = #{weekStartDate} THEN cf.weekly_count ELSE 0 END
+                     </when>
+                     <otherwise>cf.all_time_count</otherwise>
+                   </choose>,
+                   0
+                 ) AS cf_solved,
+                 COALESCE(m.solved, 0) AS manual_solved,
+                 COALESCE(m.declaration_count, 0) AS manual_declaration_count,
+                 cf.handle AS cf_handle,
+                 cf.verification_status AS cf_verification_status,
+                 cf.data_source AS cf_data_source,
+                 cf.last_sync_at AS cf_last_sync_at,
+                 m.manual_updated_at AS manual_updated_at
+          FROM app_user u
+          LEFT JOIN internal i ON i.user_id = u.id
+          LEFT JOIN cf ON cf.user_id = u.id
+          LEFT JOIN manual m ON m.user_id = u.id
+          WHERE u.status = 'active'
+        ),
+        scored AS (
+          SELECT base.*, (internal_solved + cf_solved + manual_solved) AS total_score
+          FROM base
+        ),
+        ranked AS (
+          SELECT scored.*, RANK() OVER (ORDER BY total_score DESC, internal_solved DESC) AS `rank`
+          FROM scored
+          WHERE total_score &gt; 0
+        )
+    </sql>
+
+    <sql id="leaderboardSelect">
+        SELECT id, username, nickname, avatar_url, school, email, cf_handle,
+               internal_solved, cf_solved, manual_solved, manual_declaration_count, total_score,
+               `rank`, cf_verification_status, cf_data_source, cf_last_sync_at, manual_updated_at
+        FROM ranked
+        <if test="userId != null">
+            WHERE id = #{userId}
+        </if>
+        ORDER BY total_score DESC, internal_solved DESC, id ASC
+    </sql>
+
+    <select id="selectLeaderboard" resultType="com.tizhen.core.leaderboard.model.LeaderboardRow">
+        <include refid="leaderboardCte"/>
+        <include refid="leaderboardSelect"/>
+    </select>
+
+    <select id="selectLeaderboardUser" resultType="com.tizhen.core.leaderboard.model.LeaderboardRow">
+        <include refid="leaderboardCte"/>
+        <include refid="leaderboardSelect"/>
+    </select>
+
+</mapper>

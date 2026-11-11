@@ -100,6 +100,7 @@ export interface AdminCreateUserPayload {
   email?: string
   phone?: string
   school?: string
+  avatarUrl?: string | null
 }
 
 export interface AdminLeaderboardUser {
@@ -324,6 +325,298 @@ export interface OperationLogQuery {
   pageSize?: number
 }
 
+export type LearningStatus = 'draft' | 'published' | 'offline'
+
+export type ProblemType = 'oj' | 'objective' | 'short_answer' | 'external'
+
+export type ProblemDifficulty = 'entry' | 'basic' | 'advanced'
+
+export type ObjectiveType = 'judge' | 'single' | 'multiple'
+
+export interface AdminRouteView {
+  id: string
+  name: string
+  description: string | null
+  coverUrl: string | null
+  sortOrder: number
+  status: LearningStatus
+  stageCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminRouteDetail {
+  id: string
+  name: string
+  description: string | null
+  coverUrl: string | null
+  sortOrder: number
+  status: LearningStatus
+  stageCount: number
+  createdAt: string
+  updatedAt: string
+  stages: AdminStageSummary[]
+}
+
+export interface AdminRouteQuery {
+  keyword?: string
+  status?: string
+  page?: number
+  pageSize?: number
+}
+
+export interface CreateAdminRoutePayload {
+  name: string
+  description?: string
+  coverUrl?: string
+  sortOrder?: number
+}
+
+export interface UpdateAdminRoutePayload {
+  name?: string
+  description?: string | null
+  coverUrl?: string | null
+  sortOrder?: number
+}
+
+export interface AdminStageSummary {
+  id: string
+  routeId: string
+  routeName: string
+  name: string
+  sortOrder: number
+  status: LearningStatus
+  courseCount: number
+  problemCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminCourseView {
+  id: string
+  title: string
+  url: string
+  durationSeconds: number | null
+  source: string | null
+  sortOrder: number
+  status: LearningStatus
+}
+
+export interface AdminProblemBrief {
+  id: string
+  type: ProblemType
+  objectiveType: ObjectiveType | null
+  title: string
+  difficulty: ProblemDifficulty
+  source: string | null
+  platform: string | null
+  status: LearningStatus
+}
+
+export interface AdminStageProblemView {
+  problem: AdminProblemBrief
+  sortOrder: number
+}
+
+export interface AdminStageDetail {
+  id: string
+  routeId: string
+  routeName: string
+  name: string
+  content: string | null
+  sortOrder: number
+  status: LearningStatus
+  courses: AdminCourseView[]
+  problems: AdminStageProblemView[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminStageQuery {
+  routeId?: string
+  keyword?: string
+  status?: string
+  page?: number
+  pageSize?: number
+}
+
+export interface CreateAdminStagePayload {
+  routeId: string
+  name: string
+  content?: string
+  sortOrder?: number
+}
+
+export interface UpdateAdminStagePayload {
+  name?: string
+  content?: string | null
+  sortOrder?: number
+}
+
+export interface CreateAdminCoursePayload {
+  title: string
+  url: string
+  durationSeconds?: number | null
+  source?: string | null
+  sortOrder?: number
+  status?: LearningStatus
+}
+
+export interface UpdateAdminCoursePayload {
+  title?: string
+  url?: string
+  durationSeconds?: number | null
+  source?: string | null
+  sortOrder?: number
+  status?: LearningStatus
+}
+
+export interface AdminStageProblemInput {
+  problemId: string
+  sortOrder?: number
+}
+
+export interface AdminProblemSummary {
+  id: string
+  type: ProblemType
+  objectiveType: ObjectiveType | null
+  title: string
+  difficulty: ProblemDifficulty
+  source: string | null
+  platform: string | null
+  status: LearningStatus
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminProblemQuery {
+  type?: string
+  objectiveType?: string
+  difficulty?: string
+  status?: string
+  source?: string
+  tag?: string
+  keyword?: string
+  page?: number
+  pageSize?: number
+}
+
+export interface AdminProblemUsage {
+  stageCount: number
+  submissionCount: number
+  firstAcCount: number
+  wrongBookCount: number
+  battleCount: number
+  externalCompletionCount: number
+}
+
+export interface ProblemSampleView {
+  id: string
+  inputData: string | null
+  outputData: string | null
+  explanation: string | null
+  sortOrder: number
+}
+
+export interface ObjectiveOptionView {
+  id: string
+  optionKey: string
+  content: string
+  isCorrect: boolean
+  sortOrder: number
+}
+
+export interface ScoringRubricItem {
+  point: string
+  score: number
+  description: string | null
+}
+
+export interface AdminProblemDetail {
+  id: string
+  type: ProblemType
+  objectiveType: ObjectiveType | null
+  title: string
+  statement: string
+  difficulty: ProblemDifficulty
+  source: string
+  tags: string[]
+  inputFormat: string | null
+  outputFormat: string | null
+  timeLimitMs: number | null
+  memoryLimitMb: number | null
+  samples: ProblemSampleView[]
+  options: ObjectiveOptionView[]
+  explanation: string | null
+  referenceAnswer: string | null
+  scoringRubric: ScoringRubricItem[]
+  maxScore: number
+  externalUrl: string | null
+  platform: string | null
+  testDataCount: number
+  status: LearningStatus
+  createdAt: string
+  updatedAt: string
+  usage: AdminProblemUsage
+  canDelete: boolean
+}
+
+export interface AdminProblemSampleInput {
+  inputData?: string
+  outputData?: string
+  explanation?: string | null
+  sortOrder?: number
+}
+
+export interface AdminObjectiveOptionInput {
+  optionKey: string
+  content: string
+  isCorrect: boolean
+  sortOrder?: number
+}
+
+export interface AdminProblemCreatePayload {
+  type: ProblemType
+  title: string
+  statement?: string
+  difficulty: ProblemDifficulty
+  source: string
+  tags?: string[]
+  inputFormat?: string | null
+  outputFormat?: string | null
+  timeLimitMs?: number | null
+  memoryLimitMb?: number | null
+  samples?: AdminProblemSampleInput[]
+  objectiveType?: ObjectiveType | null
+  options?: AdminObjectiveOptionInput[]
+  explanation?: string | null
+  referenceAnswer?: string | null
+  scoringRubric?: ScoringRubricItem[]
+  maxScore?: number | null
+  externalUrl?: string | null
+  platform?: string | null
+}
+
+export type AdminProblemUpdatePayload = Omit<Partial<AdminProblemCreatePayload>, 'type'>
+
+export interface TestDataView {
+  id: string
+  inputData: string
+  outputData: string
+  sortOrder: number
+}
+
+export interface TestDataItemInput {
+  inputData: string
+  outputData: string
+}
+
+export interface TestDataQuery {
+  page?: number
+  pageSize?: number
+}
+
 export function fetchAdminCsrf(): Promise<AdminCsrfToken> {
   return api.get<AdminCsrfToken>('/admin/auth/csrf')
 }
@@ -350,6 +643,21 @@ export function fetchAdminUserDetail(userId: string): Promise<AdminUserDetail> {
 
 export function createAdminUser(payload: AdminCreateUserPayload): Promise<AdminUserSummary> {
   return api.post<AdminUserSummary>('/admin/users', payload)
+}
+
+export function uploadAdminAvatar(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api
+    .post<{ url: string }>('/admin/uploads/avatar', formData)
+    .then((result) => result.url)
+}
+
+export function updateAdminUserAvatar(
+  userId: string,
+  avatarUrl: string | null
+): Promise<AdminUserSummary> {
+  return api.patch<AdminUserSummary>(`/admin/users/${userId}/avatar`, { avatarUrl })
 }
 
 export function updateAdminUserStatus(
@@ -445,4 +753,144 @@ export function fetchOperationLogs(
 
 export function fetchOperationLog(logId: string): Promise<OperationLogView> {
   return api.get<OperationLogView>(`/admin/operation-logs/${logId}`)
+}
+
+export function fetchAdminRoutes(params: AdminRouteQuery): Promise<PageResult<AdminRouteView>> {
+  return api.get<PageResult<AdminRouteView>>('/admin/learning/routes', { params })
+}
+
+export function createAdminRoute(payload: CreateAdminRoutePayload): Promise<AdminRouteView> {
+  return api.post<AdminRouteView>('/admin/learning/routes', payload)
+}
+
+export function fetchAdminRoute(routeId: string): Promise<AdminRouteDetail> {
+  return api.get<AdminRouteDetail>(`/admin/learning/routes/${routeId}`)
+}
+
+export function updateAdminRoute(
+  routeId: string,
+  payload: UpdateAdminRoutePayload
+): Promise<AdminRouteView> {
+  return api.patch<AdminRouteView>(`/admin/learning/routes/${routeId}`, payload)
+}
+
+export function deleteAdminRoute(routeId: string): Promise<void> {
+  return api.delete<void>(`/admin/learning/routes/${routeId}`)
+}
+
+export function publishAdminRoute(routeId: string): Promise<AdminRouteView> {
+  return api.post<AdminRouteView>(`/admin/learning/routes/${routeId}/publish`)
+}
+
+export function offlineAdminRoute(routeId: string): Promise<AdminRouteView> {
+  return api.post<AdminRouteView>(`/admin/learning/routes/${routeId}/offline`)
+}
+
+export function fetchAdminStages(params: AdminStageQuery): Promise<PageResult<AdminStageSummary>> {
+  return api.get<PageResult<AdminStageSummary>>('/admin/learning/stages', { params })
+}
+
+export function createAdminStage(payload: CreateAdminStagePayload): Promise<AdminStageDetail> {
+  return api.post<AdminStageDetail>('/admin/learning/stages', payload)
+}
+
+export function fetchAdminStage(stageId: string): Promise<AdminStageDetail> {
+  return api.get<AdminStageDetail>(`/admin/learning/stages/${stageId}`)
+}
+
+export function updateAdminStage(
+  stageId: string,
+  payload: UpdateAdminStagePayload
+): Promise<AdminStageDetail> {
+  return api.patch<AdminStageDetail>(`/admin/learning/stages/${stageId}`, payload)
+}
+
+export function deleteAdminStage(stageId: string): Promise<void> {
+  return api.delete<void>(`/admin/learning/stages/${stageId}`)
+}
+
+export function publishAdminStage(stageId: string): Promise<AdminStageDetail> {
+  return api.post<AdminStageDetail>(`/admin/learning/stages/${stageId}/publish`)
+}
+
+export function offlineAdminStage(stageId: string): Promise<AdminStageDetail> {
+  return api.post<AdminStageDetail>(`/admin/learning/stages/${stageId}/offline`)
+}
+
+export function replaceAdminStageProblems(
+  stageId: string,
+  items: AdminStageProblemInput[]
+): Promise<AdminStageProblemView[]> {
+  return api
+    .put<{ items: AdminStageProblemView[] }>(`/admin/learning/stages/${stageId}/problems`, { items })
+    .then((result) => result.items)
+}
+
+export function createAdminCourse(
+  stageId: string,
+  payload: CreateAdminCoursePayload
+): Promise<AdminCourseView> {
+  return api.post<AdminCourseView>(`/admin/learning/stages/${stageId}/courses`, payload)
+}
+
+export function updateAdminCourse(
+  courseId: string,
+  payload: UpdateAdminCoursePayload
+): Promise<AdminCourseView> {
+  return api.patch<AdminCourseView>(`/admin/learning/courses/${courseId}`, payload)
+}
+
+export function deleteAdminCourse(courseId: string): Promise<void> {
+  return api.delete<void>(`/admin/learning/courses/${courseId}`)
+}
+
+export function fetchAdminProblems(
+  params: AdminProblemQuery
+): Promise<PageResult<AdminProblemSummary>> {
+  return api.get<PageResult<AdminProblemSummary>>('/admin/problems', { params })
+}
+
+export function createAdminProblem(
+  payload: AdminProblemCreatePayload
+): Promise<AdminProblemDetail> {
+  return api.post<AdminProblemDetail>('/admin/problems', payload)
+}
+
+export function fetchAdminProblem(problemId: string): Promise<AdminProblemDetail> {
+  return api.get<AdminProblemDetail>(`/admin/problems/${problemId}`)
+}
+
+export function updateAdminProblem(
+  problemId: string,
+  payload: AdminProblemUpdatePayload
+): Promise<AdminProblemDetail> {
+  return api.patch<AdminProblemDetail>(`/admin/problems/${problemId}`, payload)
+}
+
+export function deleteAdminProblem(problemId: string): Promise<void> {
+  return api.delete<void>(`/admin/problems/${problemId}`)
+}
+
+export function publishAdminProblem(problemId: string): Promise<AdminProblemDetail> {
+  return api.post<AdminProblemDetail>(`/admin/problems/${problemId}/publish`)
+}
+
+export function offlineAdminProblem(problemId: string): Promise<AdminProblemDetail> {
+  return api.post<AdminProblemDetail>(`/admin/problems/${problemId}/offline`)
+}
+
+export function fetchAdminProblemTestData(
+  problemId: string,
+  params: TestDataQuery
+): Promise<PageResult<TestDataView>> {
+  return api.get<PageResult<TestDataView>>(`/admin/problems/${problemId}/test-data`, { params })
+}
+
+export function replaceAdminProblemTestData(
+  problemId: string,
+  items: TestDataItemInput[]
+): Promise<TestDataView[]> {
+  return api
+    .put<{ items: TestDataView[] }>(`/admin/problems/${problemId}/test-data`, { items })
+    .then((result) => result.items)
 }

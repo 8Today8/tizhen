@@ -219,6 +219,8 @@
     }
     const action = el.dataset.action;
     const id = el.dataset.id;
+    // 弹窗内容也会命中遮罩的 data-action，不能拦截表单内按钮的默认提交行为。
+    if (action === 'modal-overlay' && e.target !== el) return;
     e.preventDefault();
 
     switch (action) {
@@ -738,6 +740,15 @@
 
       /* 个人中心 */
       case 'open-edit-profile': TZ.customer.openEditProfile(); break;
+      case 'pick-avatar': {
+        const input = document.getElementById('profile-avatar-file');
+        if (input) input.click();
+        break;
+      }
+      case 'remove-avatar':
+        setProfileAvatarDraft('');
+        toast('头像已移除，保存后生效', 'success');
+        break;
 
       /* 后台 */
       case 'admin-add-route': TZ.admin.openRouteModal(); break;
@@ -875,9 +886,10 @@
         break;
       }
       case 'admin-refresh-cf': {
+        if (!TZ.isSuper()) { toast('仅超级管理员可刷新 CF 数据', 'danger'); break; }
         TZ.db.lastCfSync = new Date().toISOString();
-        TZ.addLog('刷新 CF 数据', '榜单管理', '模拟同步 CF 周数据');
-        toast('CF 模拟数据已刷新', 'success');
+        TZ.addLog('刷新 CF 数据', '榜单管理', '同步 CF 周数据');
+        toast('CF 数据已刷新', 'success');
         TZ.rerender();
         break;
       }
@@ -945,6 +957,33 @@
       if (m) m.classList.remove('open');
     }
   });
+
+  /* ---------- 头像上传（原型本地压缩） ---------- */
+  function setProfileAvatarDraft(url) {
+    const hidden = document.getElementById('profile-avatar-url');
+    if (hidden) hidden.value = url || '';
+    const preview = document.getElementById('profile-avatar-preview');
+    const user = TZ.currentUser();
+    if (preview && user) {
+      preview.innerHTML = TZ.avatar({
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar,
+        avatarUrl: url || ''
+      }, 64);
+    }
+  }
+
+  function handleProfileAvatarFile(file) {
+    TZ.readAvatarFile(file, function (error, dataUrl) {
+      if (error) {
+        toast(error, 'danger');
+        return;
+      }
+      setProfileAvatarDraft(dataUrl);
+      toast('头像已就绪，保存后生效', 'success');
+    });
+  }
 
   /* ---------- 表单 ---------- */
   document.addEventListener('submit', function (e) {
@@ -1094,6 +1133,9 @@
         if (!name) { toast('昵称不能为空', 'danger'); break; }
         user.name = name.slice(0, 20);
         user.avatar = user.name.slice(0, 1);
+        const avatarUrl = String(data.avatarUrl || '');
+        if (avatarUrl) user.avatarUrl = avatarUrl;
+        else delete user.avatarUrl;
         user.school = String(data.school || '').trim().slice(0, 40);
         user.email = String(data.email || '').trim();
         TZ.save();
@@ -1555,6 +1597,12 @@
 
   document.addEventListener('change', function (e) {
     const el = e.target;
+    if (el.id === 'profile-avatar-file') {
+      const file = el.files && el.files[0];
+      if (file) handleProfileAvatarFile(file);
+      el.value = '';
+      return;
+    }
     if (el.id === 'language-select') {
       TZ.state.languages[el.dataset.problem] = el.value;
       TZ.rerender();
@@ -1581,6 +1629,28 @@
         submitBtn.innerHTML = TZ.emojiIcon('🤖') + ' 提交生成任务';
       }
     }
+  });
+
+  /* ---------- 头像拖拽上传 ---------- */
+  document.addEventListener('dragover', function (e) {
+    const zone = e.target.closest('[data-avatar-drop]');
+    if (!zone) return;
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+
+  document.addEventListener('dragleave', function (e) {
+    const zone = e.target.closest('[data-avatar-drop]');
+    if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
+  });
+
+  document.addEventListener('drop', function (e) {
+    const zone = e.target.closest('[data-avatar-drop]');
+    if (!zone) return;
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) handleProfileAvatarFile(file);
   });
 
   document.addEventListener('keydown', function (e) {

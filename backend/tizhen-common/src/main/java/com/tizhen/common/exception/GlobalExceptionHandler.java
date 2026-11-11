@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
@@ -94,6 +95,11 @@ public class GlobalExceptionHandler {
         return build(ErrorCode.COMMON_PAYLOAD_TOO_LARGE,
                 ErrorCode.COMMON_PAYLOAD_TOO_LARGE.getDefaultMessage(),
                 null);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingPart(MissingServletRequestPartException exception) {
+        return build(ErrorCode.COMMON_VALIDATION_FAILED, "请选择要上传的文件", null);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

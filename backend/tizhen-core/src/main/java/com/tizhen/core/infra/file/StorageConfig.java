@@ -4,6 +4,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.nio.file.Path;
+
 /**
  * 文件存储装配。业务代码只注入 FileStorage 接口。
  */
@@ -13,6 +15,6 @@ public class StorageConfig {
 
     @Bean
     public FileStorage fileStorage(FileStorageProperties properties) {
-        return new LocalFileStorage(properties.getBaseDir());
+        return new LocalFileStorage(Path.of(properties.getBaseDir()));
     }
 }

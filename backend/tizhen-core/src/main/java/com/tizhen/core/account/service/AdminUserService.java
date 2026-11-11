@@ -21,6 +21,7 @@ import com.tizhen.core.account.model.LoginMetadata;
 import com.tizhen.core.admin.service.OperationLogService;
 import com.tizhen.core.external.entity.ExternalAccount;
 import com.tizhen.core.external.mapper.ExternalAccountMapper;
+import com.tizhen.core.infra.file.AvatarStorageService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +62,7 @@ public class AdminUserService {
     private final PlayerSessionInvalidationService playerSessionInvalidationService;
     private final OperationLogService operationLogService;
     private final PasswordEncoder passwordEncoder;
+    private final AvatarStorageService avatarStorageService;
 
     public AdminUserService(
             AppUserMapper appUserMapper,
@@ -69,7 +71,8 @@ public class AdminUserService {
             UserStatisticsMapper userStatisticsMapper,
             PlayerSessionInvalidationService playerSessionInvalidationService,
             OperationLogService operationLogService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            AvatarStorageService avatarStorageService) {
         this.appUserMapper = appUserMapper;
         this.externalAccountMapper = externalAccountMapper;
         this.llmCredentialMapper = llmCredentialMapper;
@@ -77,6 +80,7 @@ public class AdminUserService {
         this.playerSessionInvalidationService = playerSessionInvalidationService;
         this.operationLogService = operationLogService;
         this.passwordEncoder = passwordEncoder;
+        this.avatarStorageService = avatarStorageService;
     }
 
     @Transactional(readOnly = true)
@@ -132,6 +136,7 @@ public class AdminUserService {
                                        String email,
                                        String phone,
                                        String school,
+                                       String avatarUrl,
                                        LoginMetadata metadata) {
         requireSuperAdmin(actor);
         String normalizedUsername = username == null ? "" : username.trim();
@@ -150,6 +155,7 @@ public class AdminUserService {
         }
         String normalizedPhone = normalizeOptional(phone, 32, "手机号");
         String normalizedSchool = normalizeOptional(school, 128, "学校");
+        String normalizedAvatarUrl = avatarStorageService.normalizeAvatarUrl(avatarUrl);
 
         long usernameCount = appUserMapper.selectCount(Wrappers.<AppUser>lambdaQuery()
                 .eq(AppUser::getUsername, normalizedUsername));
@@ -171,6 +177,7 @@ public class AdminUserService {
         user.setEmail(normalizedEmail);
         user.setPhone(normalizedPhone);
         user.setSchool(normalizedSchool);
+        user.setAvatarUrl(normalizedAvatarUrl);
         user.setStatus("active");
         appUserMapper.insert(user);
 
@@ -180,9 +187,42 @@ public class AdminUserService {
                 "user",
                 user.getId(),
                 "新增用户 " + normalizedUsername,
-                Map.of("username", normalizedUsername, "status", "active"),
+                Map.of("username", normalizedUsername, "status", "active",
+                        "hasAvatar", normalizedAvatarUrl != null),
                 metadata);
         return toSummary(appUserMapper.selectAdminUserRow(user.getId()));
+    }
+
+    /**
+     * 超级管理员更换用户头像；avatarUrl 为空表示清除。
+     */
+    @Transactional
+    public AdminUserSummary updateAvatar(AdminPrincipal actor,
+                                         Long userId,
+                                         String avatarUrl,
+                                         LoginMetadata metadata) {
+        requireSuperAdmin(actor);
+        AppUser user = requireUserEntity(userId);
+        String normalizedAvatarUrl = avatarStorageService.normalizeAvatarUrl(avatarUrl);
+        String previousAvatarUrl = user.getAvatarUrl();
+
+        if (!java.util.Objects.equals(previousAvatarUrl, normalizedAvatarUrl)) {
+            appUserMapper.update(null, Wrappers.<AppUser>lambdaUpdate()
+                    .eq(AppUser::getId, userId)
+                    .set(AppUser::getAvatarUrl, normalizedAvatarUrl));
+            operationLogService.record(
+                    actor.id(),
+                    "update_avatar",
+                    "user",
+                    userId,
+                    "更新用户头像 " + user.getUsername(),
+                    Map.of("username", user.getUsername(), "hasAvatar", normalizedAvatarUrl != null),
+                    metadata);
+            if (previousAvatarUrl != null) {
+                avatarStorageService.deleteByUrl(previousAvatarUrl);
+            }
+        }
+        return toSummary(appUserMapper.selectAdminUserRow(userId));
     }
 
     @Transactional

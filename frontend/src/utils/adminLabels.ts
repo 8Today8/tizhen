@@ -11,6 +11,7 @@ const ACTION_LABELS: Record<string, string> = {
   enable: '启用',
   disable: '禁用',
   reset_password: '重置密码',
+  update_avatar: '更换头像',
   refresh_cf: '刷新 CF',
   review: '审核'
 }
@@ -78,6 +79,31 @@ const VALIDATION_LABELS: Record<string, string> = {
   failed: '失败'
 }
 
+const CONTENT_STATUS_LABELS: Record<string, string> = {
+  draft: '草稿',
+  published: '已发布',
+  offline: '已下架'
+}
+
+const PROBLEM_TYPE_LABELS: Record<string, string> = {
+  oj: 'OJ 编程题',
+  objective: '客观题',
+  short_answer: '简答题',
+  external: '外链题'
+}
+
+const PROBLEM_DIFFICULTY_LABELS: Record<string, string> = {
+  entry: '入门',
+  basic: '基础',
+  advanced: '进阶'
+}
+
+const OBJECTIVE_TYPE_LABELS: Record<string, string> = {
+  judge: '判断题',
+  single: '单选题',
+  multiple: '多选题'
+}
+
 export function actionLabel(action: string): string {
   return ACTION_LABELS[action] ?? action
 }
@@ -124,6 +150,37 @@ export function roleLabel(code: string | null): string {
 
 export function validationStatusLabel(status: string): string {
   return VALIDATION_LABELS[status] ?? status
+}
+
+export function contentStatusLabel(status: string): string {
+  return CONTENT_STATUS_LABELS[status] ?? status
+}
+
+export function contentStatusTagType(
+  status: string
+): 'success' | 'info' | 'warning' | 'danger' {
+  if (status === 'published') {
+    return 'success'
+  }
+  if (status === 'draft') {
+    return 'info'
+  }
+  return 'warning'
+}
+
+export function problemTypeLabel(type: string): string {
+  return PROBLEM_TYPE_LABELS[type] ?? type
+}
+
+export function problemDifficultyLabel(difficulty: string): string {
+  return PROBLEM_DIFFICULTY_LABELS[difficulty] ?? difficulty
+}
+
+export function objectiveTypeLabel(objectiveType: string | null): string {
+  if (!objectiveType) {
+    return '—'
+  }
+  return OBJECTIVE_TYPE_LABELS[objectiveType] ?? objectiveType
 }
 
 export function formatBytes(bytes: number | null): string {

@@ -1,0 +1,878 @@
+/* 个人中心：资料、统计、外部账号、申报与 LLM 凭证。 */
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ---------- Hero ---------- */
+.profile-hero {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  padding: 34px 38px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+  align-items: center;
+  gap: 32px;
+  border: 1px solid var(--tz-color-border);
+  border-radius: var(--tz-radius-lg);
+  background: var(--tz-hero-gradient);
+  box-shadow: var(--tz-shadow-md);
+}
+
+.profile-hero::after {
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--tz-color-accent-soft) 0%, transparent 68%);
+  content: '';
+  pointer-events: none;
+}
+
+.profile-hero__identity,
+.profile-hero__rank {
+  position: relative;
+  z-index: 1;
+}
+
+.profile-hero__identity {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.profile-hero__avatar {
+  flex: none;
+  border: 3px solid var(--tz-color-surface);
+  background: linear-gradient(140deg, var(--tz-color-primary), var(--tz-color-accent));
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+  box-shadow: var(--tz-shadow-md);
+}
+
+.profile-eyebrow {
+  color: var(--tz-color-primary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.profile-hero__copy h1 {
+  margin: 6px 0 6px;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.2;
+}
+
+.profile-hero__copy > p {
+  margin: 0;
+  color: var(--tz-color-text-secondary);
+  font-size: 14px;
+}
+
+.profile-hero__dot {
+  margin: 0 6px;
+  color: var(--tz-color-text-muted);
+}
+
+.profile-hero__meta {
+  display: flex;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+}
+
+.profile-hero__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.profile-hero__rank {
+  display: grid;
+  padding: 18px 22px;
+  gap: 12px;
+  border: 1px solid var(--tz-color-border);
+  border-radius: var(--tz-radius-md);
+  background: color-mix(in srgb, var(--tz-color-surface) 88%, transparent);
+  box-shadow: var(--tz-shadow-sm);
+}
+
+.profile-hero__rank > div {
+  display: grid;
+  padding-bottom: 10px;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 10px;
+  border-bottom: 1px dashed var(--tz-color-border);
+}
+
+.profile-hero__rank > div:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.profile-hero__rank span {
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+}
+
+.profile-hero__rank strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.profile-hero__rank em {
+  color: var(--tz-color-text-secondary);
+  font-size: 12px;
+  font-style: normal;
+}
+
+/* ---------- 统计 ---------- */
+.profile-stats {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.profile-stats__skeleton,
+.profile-stats__error {
+  display: grid;
+  padding: 20px;
+  grid-column: 1 / -1;
+  gap: 12px;
+  border: 1px solid var(--tz-color-border);
+  border-radius: var(--tz-radius-md);
+  background: var(--tz-color-surface);
+}
+
+.profile-stats__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--tz-color-text-secondary);
+  font-size: 13px;
+}
+
+.profile-stat {
+  display: flex;
+  min-height: 126px;
+  padding: 18px;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--tz-color-border);
+  border-radius: var(--tz-radius-md);
+  background: var(--tz-color-surface);
+  box-shadow: var(--tz-shadow-sm);
+}
+
+.profile-stat__label {
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+}
+
+.profile-stat > strong {
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.profile-stat > strong small {
+  color: var(--tz-color-text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.profile-stat > p {
+  margin: auto 0 0;
+  color: var(--tz-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.profile-stat__progress {
+  display: flex;
+  margin-top: auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-stat__progress .el-progress {
+  flex: 1;
+}
+
+.profile-stat__progress span {
+  color: var(--tz-color-text-muted);
+  font-size: 11px;
+}
+
+.profile-stat__link {
+  display: inline-flex;
+  margin-top: auto;
+  align-items: center;
+  gap: 3px;
+  color: var(--tz-color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.profile-stat__link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- 布局 ---------- */
+.profile-grid {
+  display: grid;
+  align-items: stretch;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+}
+
+/* 左右两列各自堆叠，列内面板高度互不拉伸，避免出现整行留空。 */
+.profile-main,
+.profile-side {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------- 面板 ---------- */
+.profile-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--tz-color-border);
+  border-radius: var(--tz-radius-md);
+  background: var(--tz-color-surface);
+  box-shadow: var(--tz-shadow-sm);
+}
+
+.profile-panel__head {
+  display: flex;
+  padding: 20px 22px;
+  align-items: flex-start;
+  gap: 14px;
+  border-bottom: 1px solid var(--tz-color-border);
+}
+
+.profile-panel__head > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-panel__head h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.profile-panel__head p {
+  margin: 0;
+  color: var(--tz-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.profile-panel__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.profile-panel__icon--violet {
+  background: var(--tz-color-primary-soft);
+  color: var(--tz-color-primary);
+}
+
+.profile-panel__icon--amber {
+  background: color-mix(in srgb, var(--tz-color-warning) 14%, transparent);
+  color: var(--tz-color-warning);
+}
+
+.profile-panel__icon--mint {
+  background: var(--tz-color-mint-soft);
+  color: var(--tz-color-mint);
+}
+
+.profile-panel__head-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-panel__refresh {
+  flex: none;
+}
+
+.profile-panel__body {
+  display: flex;
+  padding: 20px 22px 22px;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile-panel__state,
+.profile-panel__empty {
+  align-items: flex-start;
+  color: var(--tz-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.profile-panel__state p,
+.profile-panel__empty p {
+  margin: 0;
+}
+
+.profile-panel__note {
+  margin: 0;
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+}
+
+.profile-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.profile-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tz-color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.profile-text-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- 资料表单 ---------- */
+.profile-form {
+  gap: 2px;
+}
+
+/* ---------- 头像上传 ---------- */
+.profile-avatar-uploader {
+  position: relative;
+  display: flex;
+  margin-bottom: 16px;
+  padding: 14px;
+  align-items: center;
+  gap: 16px;
+  border: 1px dashed var(--tz-color-border-strong);
+  border-radius: var(--tz-radius-md);
+  background: color-mix(in srgb, var(--tz-color-surface-muted) 40%, transparent);
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.profile-avatar-uploader:hover,
+.profile-avatar-uploader:focus-visible {
+  border-color: var(--tz-color-primary);
+  background: var(--tz-color-primary-soft);
+  outline: none;
+}
+
+.profile-avatar-uploader--dragging {
+  border-color: var(--tz-color-primary);
+  background: var(--tz-color-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--tz-color-primary);
+}
+
+.profile-avatar-uploader--busy {
+  cursor: progress;
+}
+
+.profile-avatar-uploader__preview {
+  position: relative;
+  flex: none;
+}
+
+.profile-avatar-uploader__avatar {
+  border: 2px solid var(--tz-color-surface);
+  background: linear-gradient(140deg, var(--tz-color-primary), var(--tz-color-accent));
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  box-shadow: var(--tz-shadow-sm);
+}
+
+.profile-avatar-uploader__mask {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  border-radius: 50%;
+  background: rgba(17, 17, 24, 0.5);
+  color: #fff;
+  font-size: 22px;
+  place-items: center;
+}
+
+.profile-avatar-uploader__body {
+  min-width: 0;
+}
+
+.profile-avatar-uploader__body strong {
+  display: block;
+  font-size: 13px;
+}
+
+.profile-avatar-uploader__hint {
+  margin: 4px 0 0;
+  color: var(--tz-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.profile-avatar-uploader__meta {
+  margin: 2px 0 0;
+  color: var(--tz-color-text-muted);
+  font-size: 11px;
+}
+
+.profile-avatar-uploader__actions {
+  display: flex;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-avatar-uploader__error {
+  margin: 6px 0 0;
+  color: var(--tz-color-danger);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.profile-avatar-uploader__input {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.profile-form-grid {
+  display: grid;
+  gap: 0 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-form__hint {
+  margin: 6px 0 0;
+  color: var(--tz-color-text-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.profile-form__actions {
+  display: flex;
+  margin-top: 6px;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ---------- 账号概览 ---------- */
+.profile-overview {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.profile-overview > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profile-overview dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+}
+
+.profile-overview dd {
+  margin: 0;
+  color: var(--tz-color-text);
+  font-size: 13px;
+  text-align: right;
+  word-break: break-all;
+}
+
+.profile-overview__lock {
+  margin-left: 4px;
+  color: var(--tz-color-text-muted);
+  font-size: 10px;
+}
+
+.profile-quick-links {
+  display: grid;
+  margin-top: 4px;
+  padding-top: 14px;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px dashed var(--tz-color-border);
+}
+
+.profile-quick-links a {
+  display: inline-flex;
+  padding: 9px 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--tz-color-border);
+  border-radius: var(--tz-radius-sm);
+  color: var(--tz-color-text-secondary);
+  font-size: 12px;
+  text-decoration: none;
+  transition:
+    border-color 0.16s ease,
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.profile-quick-links a:hover {
+  border-color: var(--tz-color-primary);
+  background: var(--tz-color-primary-soft);
+  color: var(--tz-color-primary);
+}
+
+/* ---------- CF ---------- */
+.profile-cf {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 左列最后一张卡片跟随右列高度，把页面底部的整块空白补满。 */
+.profile-main > .profile-panel--cf {
+  flex: 1;
+}
+
+.profile-panel--cf .profile-panel__body {
+  flex: 1;
+}
+
+.profile-panel--cf .profile-panel__empty,
+.profile-panel--cf .profile-panel__state {
+  justify-content: center;
+}
+
+.profile-panel--bound .profile-cf {
+  flex: 1;
+  justify-content: space-between;
+}
+
+.profile-cf__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-cf__handle {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.profile-cf__stats {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-cf__stats > div {
+  padding: 12px 14px;
+  border-radius: var(--tz-radius-sm);
+  background: var(--tz-color-surface-muted);
+}
+
+.profile-cf__stats span {
+  display: block;
+  color: var(--tz-color-text-muted);
+  font-size: 11px;
+}
+
+.profile-cf__stats strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+}
+
+.profile-cf__meta {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-cf__meta > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.profile-cf__meta dt {
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+}
+
+.profile-cf__meta dd {
+  margin: 0;
+  color: var(--tz-color-text-secondary);
+  font-size: 12px;
+}
+
+/* ---------- 手动申报 ---------- */
+.profile-declarations {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  list-style: none;
+}
+
+.profile-declaration {
+  display: flex;
+  padding: 16px 22px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--tz-color-border);
+}
+
+.profile-declaration:last-child {
+  border-bottom: none;
+}
+
+.profile-declaration__main {
+  min-width: 0;
+}
+
+.profile-declaration__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-declaration__title strong {
+  font-size: 14px;
+}
+
+.profile-declaration__title span {
+  color: var(--tz-color-text-secondary);
+  font-size: 12px;
+}
+
+.profile-declaration__main p {
+  margin: 5px 0 0;
+  color: var(--tz-color-text-muted);
+  font-size: 12px;
+}
+
+.profile-declaration__main p strong {
+  color: var(--tz-color-text);
+}
+
+.profile-declaration__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ---------- LLM 凭证 ---------- */
+.profile-credential {
+  display: grid;
+  margin: 0;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-credential > div {
+  padding: 10px 12px;
+  border-radius: var(--tz-radius-sm);
+  background: var(--tz-color-surface-muted);
+}
+
+.profile-credential dt {
+  color: var(--tz-color-text-muted);
+  font-size: 11px;
+}
+
+.profile-credential dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.profile-mono {
+  font-family: var(--tz-font-mono);
+  font-size: 12px !important;
+}
+
+/* ---------- 弹窗 ---------- */
+.profile-dialog-form,
+.profile-dialog-body {
+  display: flex;
+  margin-top: 16px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-dialog-footer > div {
+  display: flex;
+  gap: 10px;
+}
+
+.profile-wide-control {
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .profile-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .profile-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-hero__rank {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-hero__rank > div {
+    border-right: 1px dashed var(--tz-color-border);
+    border-bottom: none;
+  }
+
+  .profile-hero__rank > div:last-child {
+    border-right: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 单列时按阅读优先级重排：资料、概览、凭证、外部绑定、申报。 */
+  .profile-main,
+  .profile-side {
+    display: contents;
+  }
+
+  .profile-panel--form {
+    order: 1;
+  }
+
+  .profile-panel--overview {
+    order: 2;
+  }
+
+  .profile-panel--credential {
+    order: 3;
+  }
+
+  .profile-panel--cf {
+    order: 4;
+  }
+
+  .profile-panel--declarations {
+    order: 5;
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-hero {
+    padding: 24px 20px;
+  }
+
+  .profile-hero__identity {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .profile-hero__rank {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-hero__rank > div {
+    padding-bottom: 10px;
+    border-right: none;
+    border-bottom: 1px dashed var(--tz-color-border);
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-panel__head {
+    flex-wrap: wrap;
+  }
+
+  .profile-panel__head-actions {
+    width: 100%;
+  }
+
+  .profile-declaration {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profile-credential {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-quick-links {
+    grid-template-columns: 1fr;
+  }
+}

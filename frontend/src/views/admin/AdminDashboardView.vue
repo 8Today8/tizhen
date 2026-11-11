@@ -74,7 +74,7 @@ onMounted(loadRecentLogs)
     description="从左侧菜单或快捷入口进入各管理模块；首期后台不做数据看板，聚焦内容维护与运营数据查看。"
   >
     <template #actions>
-      <el-tag type="info" effect="plain">布局骨架</el-tag>
+      <el-tag type="success" effect="plain">首期完成</el-tag>
     </template>
 
     <section class="admin-welcome tz-card">

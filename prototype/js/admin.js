@@ -61,7 +61,7 @@
     const quick = [
       { href: '#/admin/routes', icon: 'route', title: '路线管理', desc: '维护学习路线与阶段', tone: 'indigo' },
       { href: '#/admin/oj', icon: 'code', title: 'OJ 题库', desc: '新增题目、上下架', tone: 'cyan' },
-      { href: '#/admin/users', icon: 'users', title: '用户管理', desc: admin.role === 'super' ? '查看与启禁用用户' : '查看用户信息', tone: 'purple' },
+      { href: '#/admin/users', icon: 'users', title: '用户管理', desc: admin.role === 'super' ? '查看、新增、启禁用与删除用户' : '查看用户信息', tone: 'purple' },
       { href: '#/admin/leaderboard', icon: 'trophy', title: '榜单管理', desc: '查看周榜 / 总榜与手动申报', tone: 'amber' },
       { href: '#/admin/datagen', icon: 'wand', title: '造数据任务', desc: '查看生成结果与失败原因', tone: 'green' },
       { href: '#/admin/logs', icon: 'history', title: '操作日志', desc: '追踪后台关键操作', tone: 'slate' }
@@ -79,7 +79,7 @@
         return '<tr><td class="muted">' + TZ.fmtDate(l.createdAt) + '</td><td>' + TZ.esc(l.adminName) + '</td><td>' + TZ.esc(l.action) + '</td><td class="muted">' + TZ.esc(l.target) + '</td></tr>';
       }).join('') + '</tbody></table></div></section>' +
       '<aside class="card card-pad"><div class="card-icon amber">' + TZ.emojiIcon('🐨') + '</div><h3>首期后台边界</h3><ul class="rule-list compact">' +
-      '<li>' + TZ.icon('check', 15) + '<span>不做数据大盘、不做审核流。</span></li>' +
+      '<li>' + TZ.icon('check', 15) + '<span>不做数据大盘；手动申报审核仅超管可操作。</span></li>' +
       '<li>' + TZ.icon('check', 15) + '<span>内容编辑保存后立即生效。</span></li>' +
       '<li>' + TZ.icon('check', 15) + '<span>题目上下架用状态字段，已引用题目不物理删除。</span></li>' +
       '<li>' + TZ.icon('check', 15) + '<span>角色固定为超级管理员与内容运营。</span></li></ul></aside></div>',
@@ -373,8 +373,8 @@
     });
     const isSuper = TZ.isSuper();
     return TZ.layoutAdmin(
-      TZ.pageHeader('用户管理', isSuper ? '查看用户信息、启禁用账号。' : '内容运营仅可查看用户信息，不可启禁用。', '<span class="badge badge-indigo">' + rows.length + ' 位用户</span>') +
-      (!isSuper ? '<div class="info-strip"><span class="info-strip-icon">' + TZ.icon('info', 17) + '</span><div><strong>权限说明</strong><p>当前为内容运营角色，用户启禁用与角色管理仅超级管理员可操作。</p></div></div>' : '') +
+      TZ.pageHeader('用户管理', isSuper ? '查看用户信息、新增账号、启禁用与删除。' : '内容运营仅可查看用户信息，不可新增、启禁用或删除。', '<span class="badge badge-indigo">' + rows.length + ' 位用户</span>') +
+      (!isSuper ? '<div class="info-strip"><span class="info-strip-icon">' + TZ.icon('info', 17) + '</span><div><strong>权限说明</strong><p>当前为内容运营角色，用户写操作、手动申报审核与角色管理仅超级管理员可操作。</p></div></div>' : '') +
       '<div class="card"><div class="table-toolbar"><div class="search-box">' + TZ.icon('search', 16) + '<input id="admin-user-search" class="input" data-filter="admin-user-search" placeholder="搜索用户名、昵称、学校或 CF Handle" value="' + TZ.esc(TZ.state.admin.userSearch) + '" /></div></div>' +
       '<div class="table-wrap"><table class="table"><thead><tr><th>用户</th><th>用户名</th><th>学校</th><th>CF Handle</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead><tbody>' +
       rows.map(function (u) {
@@ -414,13 +414,14 @@
   A.leaderboard = function () {
     const mode = TZ.state.admin.leaderboardMode === 'all' ? 'all' : 'week';
     const isAll = mode === 'all';
+    const isSuper = TZ.isSuper();
     const rows = TZ.getLeaderboard(mode);
     const manual = TZ.db.manualDeclarations.filter(function (m) { return isAll || m.week === TZ.WEEK; });
     return TZ.layoutAdmin(
-      TZ.pageHeader('榜单管理', isAll ? '全部历史累计 · 站内历史首次 AC + CF 历史过题 + 手动申报累计。' : TZ.WEEK_LABEL + ' · 站内首次 AC + CF 模拟同步 + 手动申报。',
-        '<button class="btn btn-outline" data-action="admin-refresh-cf">' + TZ.icon('refresh', 15) + ' 刷新 CF 模拟数据</button>') +
+      TZ.pageHeader('榜单管理', isAll ? '全部历史累计 · 站内历史首次 AC + CF 历史过题 + 手动申报累计。' : TZ.WEEK_LABEL + ' · 站内首次 AC + CF 同步 + 手动申报。',
+        isSuper ? '<button class="btn btn-outline" data-action="admin-refresh-cf">' + TZ.icon('refresh', 15) + ' 刷新 CF 数据</button>' : '') +
       '<div class="lb-page-tabs">' + adminLeaderboardTabs(mode) + '</div>' +
-      '<div class="admin-stat-row"><div class="card card-pad"><span>参与统计</span><strong>' + rows.length + '</strong><em>位选手</em></div><div class="card card-pad"><span>' + (isAll ? '历史申报' : '手动申报') + '</span><strong>' + manual.length + '</strong><em>条记录</em></div><div class="card card-pad"><span>最近同步</span><strong class="date">' + TZ.fmtDate(TZ.db.lastCfSync) + '</strong><em>CF 模拟</em></div></div>' +
+      '<div class="admin-stat-row"><div class="card card-pad"><span>参与统计</span><strong>' + rows.length + '</strong><em>位选手</em></div><div class="card card-pad"><span>' + (isAll ? '历史申报' : '手动申报') + '</span><strong>' + manual.length + '</strong><em>条记录</em></div><div class="card card-pad"><span>最近同步</span><strong class="date">' + TZ.fmtDate(TZ.db.lastCfSync) + '</strong><em>CF</em></div></div>' +
       '<div class="card section"><div class="section-head card-pad-head"><div><h3>' + (isAll ? '总榜前 20' : '周榜前 20') + '</h3><div class="section-sub">' + (isAll ? '总分相同按站内累计降序；仍相同并列' : '总分相同按站内 AC 降序；仍相同并列') + '</div></div>' + (isAll ? '<span class="badge badge-amber">只读</span>' : '') + '</div><div class="table-wrap"><table class="table"><thead><tr><th>排名</th><th>选手</th><th>' + (isAll ? '站内累计' : '站内') + '</th><th>' + (isAll ? 'CF 累计' : 'CF') + '</th><th>' + (isAll ? '手动累计' : '手动') + '</th><th>总分</th></tr></thead><tbody>' +
       rows.slice(0, 20).map(function (r) {
         return '<tr><td><span class="rank ' + (r.rank <= 3 ? 'rank-' + r.rank : 'rank-plain') + '">' + r.rank + '</span></td><td><div class="lb-user">' + TZ.avatar(r.user, 30) + '<div class="lb-user-info"><strong>' + TZ.esc(r.user.name) + '</strong><span>' + TZ.esc(r.user.school || '') + '</span></div></div></td><td class="num">' + r.inSystem + '</td><td class="num">' + r.cf + '</td><td class="num">' + r.manual + '</td><td class="num"><strong>' + r.total + '</strong></td></tr>';
@@ -486,14 +487,15 @@
       ['内容维护', '学习路线、阶段、阶段内容'],
       ['题库管理', 'OJ 题目、客观题、简答题、外链题'],
       ['用户查看', '用户列表与详情'],
-      ['用户启禁用', '启用 / 禁用账号'],
+      ['用户管理', '新增、启停用、删除、重置密码'],
       ['榜单查看', '周榜与手动申报记录'],
+      ['申报审核', '通过 / 拒绝手动申报'],
       ['造数据任务', '查看全平台任务'],
       ['操作日志', '查看后台操作记录'],
       ['角色管理', '查看角色与权限']
     ];
-    const superYes = [true, true, true, true, true, true, true, true];
-    const opYes = [true, true, true, false, true, true, true, false];
+    const superYes = [true, true, true, true, true, true, true, true, true];
+    const opYes = [true, true, true, false, true, false, true, true, false];
     const renderPerm = function (name, arr, tone) {
       return '<div class="perm-list">' + permissions.map(function (p, i) {
         return '<div class="perm-row ' + (arr[i] ? 'yes' : 'no') + '"><span class="perm-icon">' + TZ.icon(arr[i] ? 'check' : 'x', 15) + '</span><div><strong>' + p[0] + '</strong><span>' + p[1] + '</span></div></div>';
@@ -504,7 +506,7 @@
       '<div class="grid grid-2">' +
       '<div class="card card-pad role-card"><div class="role-card-head"><div class="card-icon indigo">' + TZ.emojiIcon('🦊') + '</div><div><h3>超级管理员</h3><p class="muted">平台超管 · 全部权限</p></div><span class="badge badge-indigo">内置</span></div>' + renderPerm('super', superYes) + '</div>' +
       '<div class="card card-pad role-card"><div class="role-card-head"><div class="card-icon cyan">' + TZ.emojiIcon('🦊') + '</div><div><h3>内容运营</h3><p class="muted">内容与题库维护 · 只读运营数据</p></div><span class="badge badge-cyan">内置</span></div>' + renderPerm('operator', opYes) + '</div></div>' +
-      '<div class="info-strip section"><span class="info-strip-icon">' + TZ.icon('info', 17) + '</span><div><strong>首期边界</strong><p>角色与权限固定，后续版本再考虑自定义角色、细粒度权限与后台审核流。</p></div></div>',
+      '<div class="info-strip section"><span class="info-strip-icon">' + TZ.icon('info', 17) + '</span><div><strong>首期边界</strong><p>角色与权限固定，不支持自定义角色与细粒度权限；手动申报审核仅超级管理员可操作。</p></div></div>',
       'roles'
     );
   };

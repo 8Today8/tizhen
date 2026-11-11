@@ -4,6 +4,7 @@ import com.tizhen.app.api.admin.dto.BatchDeleteUsersRequest;
 import com.tizhen.app.api.admin.dto.BatchUpdateUserStatusRequest;
 import com.tizhen.app.api.admin.dto.CreateUserRequest;
 import com.tizhen.app.api.admin.dto.ResetUserPasswordRequest;
+import com.tizhen.app.api.admin.dto.UpdateUserAvatarRequest;
 import com.tizhen.app.api.admin.dto.UpdateUserStatusRequest;
 import com.tizhen.common.api.ApiResponse;
 import com.tizhen.common.api.PageResult;
@@ -61,6 +62,7 @@ public class AdminUserController {
                 body.email(),
                 body.phone(),
                 body.school(),
+                body.avatarUrl(),
                 AdminRequestMetadata.of(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(user));
     }
@@ -99,6 +101,16 @@ public class AdminUserController {
         adminUserService.resetPassword(
                 principal, userId, body.newPassword(), AdminRequestMetadata.of(request));
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{userId}/avatar")
+    public ApiResponse<AdminUserSummary> updateAvatar(
+            @AuthenticationPrincipal AdminPrincipal principal,
+            @PathVariable Long userId,
+            @Valid @RequestBody UpdateUserAvatarRequest body,
+            HttpServletRequest request) {
+        return ApiResponse.ok(adminUserService.updateAvatar(
+                principal, userId, body.avatarUrl(), AdminRequestMetadata.of(request)));
     }
 
     @PatchMapping("/{userId}/status")

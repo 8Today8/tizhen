@@ -145,8 +145,53 @@
     for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
     const bg = palettes[hash % palettes.length];
     const s = size || 36;
+    const avatarUrl = user && user.avatarUrl ? String(user.avatarUrl) : '';
+    if (avatarUrl) {
+      return '<span class="avatar avatar-img" style="width:' + s + 'px;height:' + s + 'px">' +
+        '<img src="' + TZ.esc(avatarUrl) + '" alt="" loading="lazy" /></span>';
+    }
     return '<span class="avatar" style="width:' + s + 'px;height:' + s + 'px;font-size:' + Math.round(s * 0.4) +
       'px;background:' + bg + '">' + TZ.esc((user && (user.avatar || user.name)) ? (user.avatar || user.name).slice(0, 1) : '?') + '</span>';
+  };
+
+  /**
+   * 校验并压缩头像文件，返回可直接写入 localStorage 的 data URL。
+   * 原型不调用服务端，压缩到 256px 以控制本地存储体积。
+   */
+  TZ.readAvatarFile = function (file, callback) {
+    if (!file) { callback('请选择头像图片'); return; }
+    if (['image/jpeg', 'image/png'].indexOf(file.type) < 0) {
+      callback('仅支持 JPG 或 PNG 图片'); return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      callback('头像图片不能超过 2MB'); return;
+    }
+    const reader = new FileReader();
+    reader.onerror = function () { callback('读取图片失败，请重试'); };
+    reader.onload = function () {
+      const img = new Image();
+      img.onerror = function () { callback('图片格式无法识别'); };
+      img.onload = function () {
+        try {
+          const max = 256;
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const width = Math.max(1, Math.round(img.width * scale));
+          const height = Math.max(1, Math.round(img.height * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          callback(null, canvas.toDataURL('image/jpeg', 0.86));
+        } catch (e) {
+          callback('图片处理失败，请换一张重试');
+        }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   TZ.badge = function (text, tone) {

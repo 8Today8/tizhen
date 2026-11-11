@@ -695,6 +695,45 @@ svg { display: block; }
 .form-stack { display: flex; flex-direction: column; gap: 14px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
 .form-grid .full { grid-column: 1 / -1; }
+
+.avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px dashed var(--border-strong, var(--border));
+  border-radius: 14px;
+  background: var(--surface-2);
+  transition: border-color .15s ease, background .15s ease;
+}
+.avatar-upload.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.avatar-upload-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  font-size: 13px;
+}
+.avatar-upload-info span {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.avatar-upload-info .btn { margin-top: 5px; }
+.avatar-upload .link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-dark);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.avatar-upload .link:hover { text-decoration: underline; }
 .input-with-btn { display: flex; gap: 8px; }
 .input-with-btn .input { flex: 1; min-width: 0; }
 .input-with-btn .btn { flex: none; }
@@ -920,6 +959,19 @@ svg { display: block; }
   flex: none;
   line-height: 1;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18);
+}
+
+.avatar-img {
+  overflow: hidden;
+  background: var(--surface-2, #f3eee2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06);
+}
+
+.avatar-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* ---------- 登录页 ---------- */

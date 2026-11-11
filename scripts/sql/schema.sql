@@ -1,5 +1,5 @@
 -- 题阵 · 数据库建表脚本（最新结构设计快照）
--- 正式建表由 Flyway 执行：backend/tizhen-core/src/main/resources/db/migration/V1__init_schema.sql、V2__manual_declaration_review.sql
+-- 正式建表由 Flyway 执行：backend/tizhen-core/src/main/resources/db/migration/V1__init_schema.sql、V2__manual_declaration_review.sql、V3__app_user_soft_delete.sql
 -- 本文件用于设计文档对照；结构变更以 Flyway 迁移为准，并同步更新本快照。
 -- 目标数据库：MySQL 8.4 LTS
 -- 设计依据：docs/design/01.功能模块梳理.md、docs/design/02.整体架构设计.md、docs/rules/database-rules.md
@@ -67,12 +67,14 @@ CREATE TABLE IF NOT EXISTS `app_user` (
   `school` VARCHAR(128) NULL COMMENT '学校；可选',
   `status` VARCHAR(16) NOT NULL DEFAULT 'active' COMMENT '状态：active / disabled',
   `last_login_at` DATETIME(3) NULL COMMENT '最近登录时间（UTC）',
+  `deleted_at` DATETIME(3) NULL COMMENT '逻辑删除时间（UTC）',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_app_user_username` (`username`),
   UNIQUE KEY `uk_app_user_email` (`email`),
   KEY `idx_app_user_status` (`status`),
+  KEY `idx_app_user_deleted_at` (`deleted_at`),
   KEY `idx_app_user_created_at` (`created_at`),
   CONSTRAINT `chk_app_user_username_length` CHECK (CHAR_LENGTH(`username`) BETWEEN 3 AND 20),
   CONSTRAINT `chk_app_user_status` CHECK (`status` IN ('active', 'disabled'))

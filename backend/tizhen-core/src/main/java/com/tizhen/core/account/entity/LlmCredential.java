@@ -23,6 +23,10 @@ public class LlmCredential {
 
     private String apiKeyCiphertext;
 
+    private String apiKeyLast4;
+
+    private Integer encryptionKeyVersion;
+
     private String status;
 
     private LocalDateTime lastValidatedAt;
@@ -30,6 +34,8 @@ public class LlmCredential {
     private String lastValidationError;
 
     private LocalDateTime deletedAt;
+
+    private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 
@@ -73,6 +79,22 @@ public class LlmCredential {
         this.apiKeyCiphertext = apiKeyCiphertext;
     }
 
+    public String getApiKeyLast4() {
+        return apiKeyLast4;
+    }
+
+    public void setApiKeyLast4(String apiKeyLast4) {
+        this.apiKeyLast4 = apiKeyLast4;
+    }
+
+    public Integer getEncryptionKeyVersion() {
+        return encryptionKeyVersion;
+    }
+
+    public void setEncryptionKeyVersion(Integer encryptionKeyVersion) {
+        this.encryptionKeyVersion = encryptionKeyVersion;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -103,6 +125,14 @@ public class LlmCredential {
 
     public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public LocalDateTime getUpdatedAt() {

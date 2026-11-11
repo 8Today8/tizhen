@@ -40,11 +40,46 @@ mybatis-plus:
 
 tizhen:
   storage:
-    base-dir: ${DATA_STORAGE_DIR:./data/storage}
+    # app 与 worker 必须共享同一目录；Maven 分模块启动时统一落到 backend/data/storage。
+    base-dir: ${DATA_STORAGE_DIR:../data/storage}
+  judge:
+    base-url: ${GO_JUDGE_URL:http://127.0.0.1:5050}
+    compile-timeout-ms: ${GO_JUDGE_COMPILE_TIMEOUT_MS:20000}
+    max-output-bytes: ${GO_JUDGE_MAX_OUTPUT_BYTES:16777216}
+    max-attempts: ${WORKER_JUDGE_MAX_ATTEMPTS:3}
+    stale-seconds: ${WORKER_JUDGE_STALE_SECONDS:300}
+  llm:
+    base-url: ${PLATFORM_LLM_BASE_URL:}
+    api-key: ${PLATFORM_LLM_API_KEY:}
+    model: ${PLATFORM_LLM_MODEL:}
+    timeout-seconds: ${PLATFORM_LLM_TIMEOUT_SECONDS:60}
+    credential-encryption-key: ${LLM_CREDENTIAL_ENCRYPTION_KEY:}
+    credential-key-version: ${LLM_CREDENTIAL_KEY_VERSION:1}
+    validation-timeout-seconds: ${LLM_CREDENTIAL_VALIDATION_TIMEOUT_SECONDS:15}
+    providers:
+      deepseek:
+        base-url: ${LLM_DEEPSEEK_BASE_URL:https://api.deepseek.com/v1}
+        models: [deepseek-chat, deepseek-reasoner]
+        default-model: deepseek-chat
+      qwen:
+        base-url: ${LLM_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+        models: [qwen-plus, qwen-turbo, qwen-max]
+        default-model: qwen-plus
+      zhipu:
+        base-url: ${LLM_ZHIPU_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
+        models: [glm-4-plus, glm-4-air, glm-4-flash]
+        default-model: glm-4-plus
+      openai:
+        base-url: ${LLM_OPENAI_BASE_URL:https://api.openai.com/v1}
+        models: [gpt-4o-mini, gpt-4o]
+        default-model: gpt-4o-mini
 
 worker:
   poll-interval-ms: ${WORKER_POLL_INTERVAL_MS:500}
+  recovery-interval-ms: ${WORKER_RECOVERY_INTERVAL_MS:30000}
   judge-concurrency: ${WORKER_JUDGE_CONCURRENCY:4}
+  datagen-concurrency: ${WORKER_DATAGEN_CONCURRENCY:2}
+  datagen-stale-seconds: ${WORKER_DATAGEN_STALE_SECONDS:900}
 
 management:
   endpoints:

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Trophy } from '@element-plus/icons-vue'
+
 const modules = [
   {
     title: '学习路线',
@@ -71,7 +73,7 @@ const modules = [
           </div>
           <div>
             <dt>当前阶段</dt>
-            <dd>基础工程</dd>
+            <dd>首期完成</dd>
           </div>
         </dl>
         <p class="hero__note">
@@ -84,7 +86,7 @@ const modules = [
     <section class="section">
       <div class="section__head">
         <h2>功能模块</h2>
-        <p class="tz-muted">页面骨架已就位，业务功能将按模块逐步接入。</p>
+        <p class="tz-muted">首期功能已全部接入，可完整体验学习、刷题、榜单、对战与造数据。</p>
       </div>
 
       <div class="module-grid">
@@ -104,15 +106,27 @@ const modules = [
     </section>
 
     <section class="section">
+      <RouterLink class="xcpc-entry" to="/xcpc">
+        <span class="xcpc-entry__icon"><el-icon><Trophy /></el-icon></span>
+        <div>
+          <span class="xcpc-entry__eyebrow">EXTERNAL SERVICE</span>
+          <h3>XCPC 评分与获奖记录</h3>
+          <p>查看 ICPC / CCPC 等赛事的评分与获奖记录；题阵提供站内说明与外部入口。</p>
+        </div>
+        <span class="xcpc-entry__more">了解详情 →</span>
+      </RouterLink>
+    </section>
+
+    <section class="section">
       <div class="tz-card note-card">
         <div>
-          <h2>开发状态</h2>
+          <h2>完成情况</h2>
           <p class="tz-muted">
-            本版本完成了前后端基础工程：多模块后端、统一响应与异常、MyBatis-Plus、
-            Redis 会话、安全基线、迁移脚本，以及前端路由、布局、请求封装与主题。
+            首期范围已全部落地：学习路线、题库与判题、榜单、1v1 对战、AI 造数据与运营后台，
+            由 Java 21 + Spring Boot 3.5 后端与 Vue 3 前端共同支撑。
           </p>
         </div>
-        <el-tag type="warning" effect="plain" size="large">骨架版本</el-tag>
+        <el-tag type="success" effect="plain" size="large">首期完成</el-tag>
       </div>
     </section>
   </div>

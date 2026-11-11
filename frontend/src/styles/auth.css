@@ -84,8 +84,53 @@ html[data-theme='dusk'] .auth-card {
   line-height: 1.65;
 }
 
+.auth-tabs {
+  display: flex;
+  padding: 4px;
+  margin: 0 0 20px;
+  gap: 4px;
+  border: 1px solid var(--tz-color-border);
+  border-radius: 13px;
+  background: var(--tz-color-surface-muted);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--tz-color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.auth-tab:hover {
+  color: var(--tz-color-text);
+}
+
+.auth-tab.is-active {
+  background: var(--tz-color-surface);
+  color: var(--tz-color-primary);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--tz-color-text) 8%, transparent);
+}
+
 .auth-form {
   margin-top: 20px;
+}
+
+.auth-form__hint {
+  margin: -4px 0 16px;
+  color: var(--tz-color-text-muted);
+  font-size: 11px;
+  line-height: 1.65;
 }
 
 .auth-form .el-form-item {

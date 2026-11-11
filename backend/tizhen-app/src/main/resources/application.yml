@@ -68,8 +68,48 @@ mybatis-plus:
 
 tizhen:
   storage:
-    base-dir: ${DATA_STORAGE_DIR:./data/storage}
+    # app 与 worker 必须共享同一目录；Maven 分模块启动时统一落到 backend/data/storage。
+    base-dir: ${DATA_STORAGE_DIR:../data/storage}
+  submission:
+    rate-limit:
+      max-requests: ${SUBMISSION_RATE_LIMIT_MAX:10}
+      window-seconds: ${SUBMISSION_RATE_LIMIT_WINDOW_SECONDS:60}
+  datagen:
+    rate-limit:
+      max-requests: ${DATAGEN_RATE_LIMIT_MAX:10}
+      window-seconds: ${DATAGEN_RATE_LIMIT_WINDOW_SECONDS:60}
+  llm:
+    credential-encryption-key: ${LLM_CREDENTIAL_ENCRYPTION_KEY:}
+    credential-key-version: ${LLM_CREDENTIAL_KEY_VERSION:1}
+    validation-timeout-seconds: ${LLM_CREDENTIAL_VALIDATION_TIMEOUT_SECONDS:15}
+    providers:
+      deepseek:
+        base-url: ${LLM_DEEPSEEK_BASE_URL:https://api.deepseek.com/v1}
+        models: [deepseek-chat, deepseek-reasoner]
+        default-model: deepseek-chat
+      qwen:
+        base-url: ${LLM_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+        models: [qwen-plus, qwen-turbo, qwen-max]
+        default-model: qwen-plus
+      zhipu:
+        base-url: ${LLM_ZHIPU_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
+        models: [glm-4-plus, glm-4-air, glm-4-flash]
+        default-model: glm-4-plus
+      openai:
+        base-url: ${LLM_OPENAI_BASE_URL:https://api.openai.com/v1}
+        models: [gpt-4o-mini, gpt-4o]
+        default-model: gpt-4o-mini
   security:
+    player:
+      session:
+        absolute-timeout-seconds: 43200
+      csrf:
+        cookie-name: XSRF-TOKEN
+        header-name: X-XSRF-TOKEN
+      login:
+        max-failures: 5
+        window-seconds: 900
+        lock-seconds: 900
     admin:
       session:
         cookie-name: TIZHEN_ADMIN_SID

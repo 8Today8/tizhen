@@ -9,9 +9,9 @@ test('首页展示品牌、导航与模块入口', async ({ page }) => {
   await expect(page.getByRole('link', { name: /学习路线/ }).first()).toBeVisible()
 })
 
-test('未实现页面展示占位说明', async ({ page }) => {
+test('未登录访问受限页面会跳转登录页', async ({ page }) => {
   await page.goto('/problems')
 
-  await expect(page.getByRole('heading', { level: 1, name: '题库' })).toBeVisible()
-  await expect(page.getByText('工程骨架已就绪')).toBeVisible()
+  await expect(page).toHaveURL(/\/login/)
+  await expect(page.getByRole('heading', { level: 1, name: '欢迎回来' })).toBeVisible()
 })
