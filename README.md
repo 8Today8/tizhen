@@ -19,49 +19,9 @@
 
 ## 架构
 
-```mermaid
-flowchart TB
-  subgraph Public["访问端"]
-    Browser["选手 / 管理员浏览器<br/>Vue 3 SPA"]
-  end
+![题阵架构图](docs/images/architecture.png)
 
-  subgraph Edge["接入层"]
-    Nginx["Nginx<br/>静态资源 · HTTPS · 反向代理 · WebSocket"]
-  end
-
-  subgraph AppZone["应用层"]
-    App["tizhen-app<br/>REST API + WebSocket + 鉴权"]
-    Worker["tizhen-worker<br/>异步任务 + 判题编排"]
-  end
-
-  subgraph DataZone["数据层"]
-    RDBMS[("MySQL 8.4 LTS")]
-    Redis[("Redis 7<br/>会话 · 限流 · 锁 · 短期缓存")]
-    Files[("文件卷<br/>造数据文件")]
-  end
-
-  subgraph SandboxZone["判题层（无外网）"]
-    Judge["go-judge<br/>C++ / Python 隔离执行"]
-  end
-
-  subgraph External["外部服务"]
-    LLM["预置 LLM 服务商"]
-    CF["Codeforces 公开 API<br/>真实数据同步"]
-  end
-
-  Browser -->|HTTPS / WSS| Nginx
-  Nginx -->|/api /ws| App
-  Nginx -->|静态资源| Browser
-  App --> RDBMS
-  App --> Redis
-  App -.->|读取下载文件| Files
-  Worker --> RDBMS
-  Worker --> Redis
-  Worker --> Files
-  Worker -->|内部 HTTP| Judge
-  Worker -->|HTTPS| LLM
-  Worker -->|HTTPS| CF
-```
+<!-- 图表源文件：docs/images/architecture.mmd，可用 mermaid-cli 重新渲染 -->
 
 ### 三个关键决策
 
