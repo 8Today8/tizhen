@@ -27,7 +27,7 @@
 
 - **模块化单体，不拆微服务。** 首期约束是注册 < 1 万、日活 < 1 千、同时判题 < 50，9 个模块共享同一套账号、权限与事务。拆微服务只会引入跨服务调用和分布式一致性成本；模块边界由包结构、接口与 ArchUnit 测试约束，未来可按模块拆出。
 - **异步执行单独成进程。** 判题与造数据是资源密集且执行的是不可信代码，因此拆出 `tizhen-worker` 并接入 go-judge 沙箱，`tizhen-app` 永不执行用户代码。worker 可以独立扩容、独立重启。
-- **首期不引入消息队列。** 单机规模下，数据库任务表 + `SKIP LOCKED` 已能满足多实例并发领取、失败重试与幂等回写，少一个需要运维的组件；量级上来后按「消息投递 + 幂等消费 + 延迟重试 + 死信对账」替换，业务接口不变。
+- **首期不引入消息队列，V2 已按演进路径补上。** 单机规模下，数据库任务表 + `SKIP LOCKED` 已能满足多实例并发领取、失败重试与幂等回写，少一个需要运维的组件；量级上来后按「消息投递 + 幂等消费 + 延迟重试 + 死信对账」替换，业务接口不变。V2 已实现该路径的 RabbitMQ 版本（数据库仍为事实源，保留轮询兜底），通过 `tizhen.mq.enabled` 开关启用，默认关闭；设计与验收情况见 `docs/design/02.整体架构设计.md` 第 10 节。
 
 ## 技术架构
 
@@ -37,6 +37,7 @@
 | 前端 | Vue 3、TypeScript、Vite、Vue Router、Pinia、Axios、Element Plus、CodeMirror 6 |
 | 实时通信 | 浏览器原生 WebSocket + Spring WebSocket（会话身份复用 Spring Session） |
 | 判题 | go-judge 沙箱服务，由 `tizhen-worker` 异步消费判题任务 |
+| 异步消息（V2，默认关闭） | RabbitMQ 3.13 + Spring AMQP：判题与造数据投递、TTL + DLX 分级重试与死信 |
 | 文件存储 | 本地文件卷 + `FileStorage` 抽象，头像经魔数与尺寸校验后落盘 |
 | 测试 | JUnit 5、Testcontainers、Vitest、Vue Test Utils、Playwright |
 | 部署 | Docker Compose（本地开发依赖），生产编排待补充 |
@@ -54,6 +55,7 @@
 ### 关键设计
 
 - **异步判题**：提交落库后由 worker 通过 `FOR UPDATE SKIP LOCKED` 领取任务，支持多实例并发消费与幂等回写，避免重复判题。
+- **异步链路升级（V2，已实现、默认关闭）**：改用 RabbitMQ 投递任务 ID，数据库仍是唯一事实源；事务提交后发布 + 30 秒阈值补偿扫描，TTL + DLX 三级重试与死信，消费端按 id 条件更新保证幂等；开关关闭时回到 V1 轮询。重复投递、失败重试、超时回收、死信、broker 重启五类故障演练与 100 条消息轻量压测已完成。
 - **榜单聚合**：基于 CTE 聚合站内 AC、Codeforces 与手动申报数据，使用 `RANK()` 处理同分并列，禁用用户自动排除。
 - **认证与安全**：Spring Security + Redis Session，Cookie CSRF 防护，选手/管理员双端认证；上传文件校验魔数、尺寸与受控访问路径。
 - **AI 能力**：简答题判分使用平台密钥；AI 造数据支持选手自带 Key，凭证加密存储，生成结果逐组校验。
@@ -112,11 +114,12 @@ scripts/       # 开发环境脚本
 ```bash
 cp deploy/.env.example deploy/.env
 # 编辑 deploy/.env，填写 MySQL、Redis 密码与管理员初始化账号
+# RabbitMQ 账号默认 tizhen/tizhen，仅供本地开发，需要启用 V2 链路时再修改
 ```
 
-若本机 3306/6379 已被占用，可在 `deploy/.env` 中修改 `MYSQL_PORT` / `REDIS_PORT`；Docker 编排与后端都会读取同一组变量。
+若本机 3306/6379/5672 已被占用，可在 `deploy/.env` 中修改 `MYSQL_PORT` / `REDIS_PORT` / `RABBITMQ_PORT`；Docker 编排与后端都会读取同一组变量。
 
-### 2. 启动 MySQL 与 Redis
+### 2. 启动本地基础设施（MySQL / Redis / RabbitMQ）
 
 ```bash
 bash scripts/dev-up.sh
@@ -129,6 +132,8 @@ bash scripts/dev-down.sh
 ```
 
 表结构由后端启动时的 Flyway 自动创建，无需手工执行 SQL。
+
+> RabbitMQ 默认随 MySQL、Redis 一起启动，但 `TIZHEN_MQ_ENABLED=false` 时 app 与 worker 都不会连接它，保持 V1 轮询链路。管理台：http://127.0.0.1:15672，账号取自 `deploy/.env` 的 `RABBITMQ_USER` / `RABBITMQ_PASSWORD`（未配置时回退 `tizhen` / `tizhen`）。
 
 ### 3. 启动后端
 
@@ -163,6 +168,15 @@ mvn -pl tizhen-worker spring-boot:run
 > 只浏览页面和榜单时 worker 非必需；OJ 判题、简答判分、AI 造数据需要 worker 运行。
 > 判题还需要本地 go-judge 服务（默认 `http://127.0.0.1:5050`，可通过 `GO_JUDGE_URL` 覆盖）。未启动时提交会停留在待判题状态。
 > LLM 构造/直接生成数据与简答判分需要配置对应服务商凭证；随机造数据不依赖 LLM。
+
+#### 可选：启用 V2 消息队列
+
+默认走 V1 数据库轮询，无需 RabbitMQ。要验证 MQ 链路：
+
+1. 在 `deploy/.env` 设置 `TIZHEN_MQ_ENABLED=true`（app 与 worker 必须一致）；
+2. 启动 app 与 worker 时加载同一份 `.env`，worker 会以 `@RabbitListener` 消费 `judge.oj`、`judge.short_answer`、`datagen` 三个队列；
+3. 关闭时改回 `false` 并重启两端，即回到轮询；
+4. 需要 Docker 的集成测试（`TaskTopologyIntegrationTest`、`TaskMessagingIntegrationTest`、`SubmissionClaimIntegrationTest`、`BusinessChainIntegrationTest`、`V1PollingFallbackTest`、`TaskCompensationScannerTest`、`BrokerRestartDrillTest`）会使用 Testcontainers 自动拉起 MySQL、Redis 与 broker，无 Docker 时自动跳过。
 
 ### 4. 启动前端
 
@@ -217,7 +231,8 @@ npm run test:e2e
 ## 当前状态与边界
 
 - 首期范围内的业务功能已完成，前后端接口、页面与 worker 均已接入。
-- 自动化测试覆盖仍在补充，当前以核心流程验证为主。
+- V2 RabbitMQ 异步链路已实现（2026-11-25），默认关闭，本地启动不需要 RabbitMQ；全量 40 个测试通过、0 跳过，覆盖消息拓扑、发布与消费状态机、真实 Worker 业务回写、补偿扫描、V1 回退，以及重复投递、失败重试、超时回收、死信、broker 重启五类故障演练和 100 条消息轻量压测（外部沙箱与 LLM 用 Mock 替换）。
+- worker 进程被 kill 的容器级演练、broker 长时间宕机后的自动回退与分阶段灰度尚未执行。
 - `judge-runner/` 的语言镜像与沙箱参数配置、生产部署编排（nginx TLS、app/worker/judge 镜像）待完善。
 - 首期不做专题榜、审核工作流、数据看板等范围外功能。
 - 单机方案：WebSocket 未做多实例广播与离线补拉，量级上来后需要网关 + 消息路由（见「三个关键决策」）。

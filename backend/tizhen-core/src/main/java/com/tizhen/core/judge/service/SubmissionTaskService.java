@@ -57,6 +57,19 @@ public class SubmissionTaskService {
     }
 
     /**
+     * 按 id 领取任务。allowInProgress 用于重试消息与 broker 重投：
+     * 正常消息只领取 pending，重试消息允许接管仍在执行态的任务。
+     */
+    @Transactional
+    public Submission claimById(Long submissionId, boolean allowInProgress, int maxAttempts) {
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        int updated = allowInProgress
+                ? submissionMapper.claimInProgressById(submissionId, now, maxAttempts)
+                : submissionMapper.claimPendingById(submissionId, now);
+        return updated == 1 ? submissionMapper.selectById(submissionId) : null;
+    }
+
+    /**
      * 释放长时间停留在进行中的任务。未超过尝试上限时重新排队，
      * 超过上限则标记失败，避免用户一直看到“判题中”。
      */

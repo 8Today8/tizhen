@@ -54,6 +54,18 @@ spring:
     multipart:
       max-file-size: 20MB
       max-request-size: 50MB
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:tizhen}
+    password: ${RABBITMQ_PASSWORD:tizhen}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    # 关闭 Boot 默认 RabbitAdmin；由 MqConfig 在 tizhen.mq.enabled=true 时声明拓扑。
+    dynamic: false
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
@@ -78,6 +90,12 @@ tizhen:
     rate-limit:
       max-requests: ${DATAGEN_RATE_LIMIT_MAX:10}
       window-seconds: ${DATAGEN_RATE_LIMIT_WINDOW_SECONDS:60}
+  mq:
+    # 默认关闭；开启后提交/造数据在事务提交后投递 RabbitMQ，worker 需同步开启。
+    enabled: ${TIZHEN_MQ_ENABLED:false}
+    stale-seconds: ${TIZHEN_MQ_STALE_SECONDS:30}
+    scan-interval-ms: ${TIZHEN_MQ_SCAN_INTERVAL_MS:5000}
+    retry-delays: ${TIZHEN_MQ_RETRY_DELAYS:5s,30s,120s}
   llm:
     credential-encryption-key: ${LLM_CREDENTIAL_ENCRYPTION_KEY:}
     credential-key-version: ${LLM_CREDENTIAL_KEY_VERSION:1}
@@ -146,6 +164,10 @@ management:
       probes:
         enabled: true
       show-details: never
+  health:
+    rabbit:
+      # 关闭 MQ 时不做 broker 健康检查，避免只启动 MySQL/Redis 时健康端点报 DOWN。
+      enabled: ${TIZHEN_MQ_ENABLED:false}
 
 logging:
   level:

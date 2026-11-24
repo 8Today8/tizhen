@@ -1,7 +1,7 @@
 name: tizhen-dev
 
 # 题阵本地开发基础设施
-# 仅包含 MySQL 8.4 LTS 与 Redis 7.4.x。
+# MySQL 8.4 LTS、Redis 7.4.x 与 RabbitMQ 3.13（V2 异步链路，默认不启用）。
 # app/worker/nginx/go-judge 待后端、前端镜像与沙箱参数确定后加入完整编排。
 
 services:
@@ -74,6 +74,36 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: tizhen-rabbitmq
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-tizhen}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-tizhen}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+    ports:
+      # 只绑定本机；管理台仅用于本地排查。
+      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    stop_grace_period: 30s
+    networks:
+      - data-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   data-net:
     name: tizhen-data-net
@@ -84,3 +114,5 @@ volumes:
     name: tizhen-mysql-data
   redis-data:
     name: tizhen-redis-data
+  rabbitmq-data:
+    name: tizhen-rabbitmq-data

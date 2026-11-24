@@ -9,6 +9,7 @@ import com.tizhen.core.judge.model.SubmissionListRow;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -93,4 +94,53 @@ public interface SubmissionMapper extends BaseMapper<Submission> {
             """)
     List<Submission> selectStaleInProgress(@Param("threshold") LocalDateTime threshold,
                                            @Param("limit") int limit);
+
+    /**
+     * 按 id 条件领取待处理任务，供 MQ 消费端使用。更新 0 行表示已被处理或重复投递。
+     */
+    @Update("""
+            UPDATE submission
+            SET status = CASE WHEN problem_type = 'oj' THEN 'judging' ELSE status END,
+                judge_started_at = #{now},
+                judge_attempts = judge_attempts + 1,
+                updated_at = #{now}
+            WHERE id = #{id}
+              AND ((problem_type = 'oj' AND status = 'pending')
+                OR (problem_type = 'short_answer' AND status = 'grading'
+                    AND judge_started_at IS NULL))
+            """)
+    int claimPendingById(@Param("id") Long id, @Param("now") LocalDateTime now);
+
+    /**
+     * 领取一条仍在执行中的任务，用于重试消息和 broker 重投。
+     * 只有未达到尝试上限时才允许占用，防止重复消息无限执行。
+     */
+    @Update("""
+            UPDATE submission
+            SET judge_started_at = #{now},
+                judge_attempts = judge_attempts + 1,
+                updated_at = #{now}
+            WHERE id = #{id}
+              AND judge_attempts < #{maxAttempts}
+              AND ((problem_type = 'oj' AND status = 'judging')
+                OR (problem_type = 'short_answer' AND status = 'grading'))
+            """)
+    int claimInProgressById(@Param("id") Long id,
+                            @Param("now") LocalDateTime now,
+                            @Param("maxAttempts") int maxAttempts);
+
+    /**
+     * 补偿扫描：捞取落库超过阈值仍未进入执行态的任务。
+     */
+    @Select("""
+            SELECT id, problem_type FROM submission
+            WHERE ((problem_type = 'oj' AND status = 'pending')
+                OR (problem_type = 'short_answer' AND status = 'grading'
+                    AND judge_started_at IS NULL))
+              AND created_at < #{threshold}
+            ORDER BY created_at ASC, id ASC
+            LIMIT #{limit}
+            """)
+    List<Submission> selectUndispatched(@Param("threshold") LocalDateTime threshold,
+                                        @Param("limit") int limit);
 }

@@ -26,6 +26,22 @@ spring:
     baseline-on-migrate: true
     baseline-version: 1
     validate-on-migrate: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:tizhen}
+    password: ${RABBITMQ_PASSWORD:tizhen}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    # 关闭 Boot 默认 RabbitAdmin；由 MqConfig 在 tizhen.mq.enabled=true 时声明拓扑。
+    dynamic: false
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        default-requeue-rejected: false
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
@@ -48,6 +64,12 @@ tizhen:
     max-output-bytes: ${GO_JUDGE_MAX_OUTPUT_BYTES:16777216}
     max-attempts: ${WORKER_JUDGE_MAX_ATTEMPTS:3}
     stale-seconds: ${WORKER_JUDGE_STALE_SECONDS:300}
+  mq:
+    # 默认关闭，保持 V1 数据库轮询；开启后由 RabbitMQ 驱动消费。
+    enabled: ${TIZHEN_MQ_ENABLED:false}
+    stale-seconds: ${TIZHEN_MQ_STALE_SECONDS:30}
+    scan-interval-ms: ${TIZHEN_MQ_SCAN_INTERVAL_MS:5000}
+    retry-delays: ${TIZHEN_MQ_RETRY_DELAYS:5s,30s,120s}
   llm:
     base-url: ${PLATFORM_LLM_BASE_URL:}
     api-key: ${PLATFORM_LLM_API_KEY:}
@@ -80,6 +102,7 @@ worker:
   judge-concurrency: ${WORKER_JUDGE_CONCURRENCY:4}
   datagen-concurrency: ${WORKER_DATAGEN_CONCURRENCY:2}
   datagen-stale-seconds: ${WORKER_DATAGEN_STALE_SECONDS:900}
+  datagen-max-attempts: ${WORKER_DATAGEN_MAX_ATTEMPTS:2}
 
 management:
   endpoints:
@@ -89,6 +112,10 @@ management:
   endpoint:
     health:
       show-details: never
+  health:
+    rabbit:
+      # 关闭 MQ 时不做 broker 健康检查，避免本地只启动 MySQL/Redis 时被标记 DOWN。
+      enabled: ${TIZHEN_MQ_ENABLED:false}
 
 logging:
   level:

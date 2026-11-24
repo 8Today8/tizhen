@@ -19,11 +19,14 @@ import com.tizhen.core.judge.model.SubmissionDetailView;
 import com.tizhen.core.judge.model.SubmissionListItem;
 import com.tizhen.core.judge.model.SubmissionListRow;
 import com.tizhen.core.judge.model.SubmissionProblemBrief;
+import com.tizhen.core.mq.TaskCreatedEvent;
+import com.tizhen.core.mq.TaskType;
 import com.tizhen.core.problem.entity.ObjectiveOption;
 import com.tizhen.core.problem.entity.Problem;
 import com.tizhen.core.problem.mapper.ObjectiveOptionMapper;
 import com.tizhen.core.problem.mapper.ProblemMapper;
 import com.tizhen.core.problem.model.ScoringRubricItem;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +82,7 @@ public class SubmissionService {
     private final ObjectiveOptionMapper objectiveOptionMapper;
     private final SubmissionRateLimiter rateLimiter;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SubmissionService(SubmissionMapper submissionMapper,
                              FirstAcMapper firstAcMapper,
@@ -86,7 +90,8 @@ public class SubmissionService {
                              ProblemMapper problemMapper,
                              ObjectiveOptionMapper objectiveOptionMapper,
                              SubmissionRateLimiter rateLimiter,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             ApplicationEventPublisher eventPublisher) {
         this.submissionMapper = submissionMapper;
         this.firstAcMapper = firstAcMapper;
         this.wrongBookMapper = wrongBookMapper;
@@ -94,6 +99,7 @@ public class SubmissionService {
         this.objectiveOptionMapper = objectiveOptionMapper;
         this.rateLimiter = rateLimiter;
         this.objectMapper = objectMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -140,15 +146,24 @@ public class SubmissionService {
             submission.setCode(command.code());
             submission.setStatus(STATUS_PENDING);
             submissionMapper.insert(submission);
+            publishTaskCreated(submission.getId(), TaskType.JUDGE_OJ);
         } else if (TYPE_OBJECTIVE.equals(problem.getType())) {
             submission = gradeObjective(problem, submission, command.selectedOptions(), now);
         } else {
             submission.setAnswerText(command.answerText());
             submission.setStatus(STATUS_GRADING);
             submissionMapper.insert(submission);
+            publishTaskCreated(submission.getId(), TaskType.JUDGE_SHORT_ANSWER);
         }
 
         return getDetail(userId, submission.getId());
+    }
+
+    /**
+     * 只发领域事件；事务提交后由 TaskDispatchListener 决定是否投递 MQ。
+     */
+    private void publishTaskCreated(Long submissionId, TaskType taskType) {
+        eventPublisher.publishEvent(new TaskCreatedEvent(submissionId, taskType));
     }
 
     @Transactional(readOnly = true)

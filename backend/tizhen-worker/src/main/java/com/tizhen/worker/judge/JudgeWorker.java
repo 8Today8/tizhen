@@ -7,6 +7,7 @@ import com.tizhen.core.judge.entity.Submission;
 import com.tizhen.core.judge.model.JudgeOutcome;
 import com.tizhen.core.judge.service.JudgeResultService;
 import com.tizhen.core.judge.service.SubmissionTaskService;
+import com.tizhen.core.mq.TaskRetryableException;
 import com.tizhen.core.problem.entity.Problem;
 import com.tizhen.core.problem.entity.TestData;
 import com.tizhen.core.problem.mapper.ProblemMapper;
@@ -29,8 +30,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 异步判题与简答判分消费器。OJ 提交和简答题都通过数据库任务表领取，
- * 不引入消息队列；判题结果只由本进程回写。
+ * 异步判题与简答判分执行器。V1 通过数据库任务表轮询领取；V2 由 MQ 消费者
+ * 按任务 id 调用 {@link #judgeOj} / {@link #gradeShortAnswer}，两条路径共用执行逻辑。
+ * 判题结果只由本进程回写，数据库始终是任务状态的事实源。
  */
 @Component
 public class JudgeWorker {
@@ -57,6 +59,7 @@ public class JudgeWorker {
     private final int concurrency;
     private final int maxAttempts;
     private final long staleSeconds;
+    private final boolean mqEnabled;
 
     public JudgeWorker(SubmissionTaskService taskService,
                        JudgeResultService resultService,
@@ -67,7 +70,8 @@ public class JudgeWorker {
                        ObjectMapper objectMapper,
                        @Value("${worker.judge-concurrency:4}") int concurrency,
                        @Value("${tizhen.judge.max-attempts:3}") int maxAttempts,
-                       @Value("${tizhen.judge.stale-seconds:300}") long staleSeconds) {
+                       @Value("${tizhen.judge.stale-seconds:300}") long staleSeconds,
+                       @Value("${tizhen.mq.enabled:false}") boolean mqEnabled) {
         this.taskService = taskService;
         this.resultService = resultService;
         this.goJudgeClient = goJudgeClient;
@@ -78,22 +82,27 @@ public class JudgeWorker {
         this.concurrency = Math.max(concurrency, 1);
         this.maxAttempts = Math.max(maxAttempts, 1);
         this.staleSeconds = Math.max(staleSeconds, 30);
+        this.mqEnabled = mqEnabled;
         this.executor = Executors.newFixedThreadPool(this.concurrency, threadFactory());
     }
 
     @Scheduled(fixedDelayString = "${worker.poll-interval-ms:500}")
     public void poll() {
+        // MQ 模式下由消费者驱动执行；轮询保留为关闭开关后的回退路径。
+        if (mqEnabled) {
+            return;
+        }
         int freeSlots = concurrency - activeTasks.get();
         if (freeSlots <= 0) {
             return;
         }
         try {
             List<Submission> ojTasks = taskService.claimOjTasks(freeSlots);
-            dispatch(ojTasks, this::judgeOj);
+            dispatch(ojTasks, this::judgeOjForPolling);
             freeSlots -= ojTasks.size();
             if (freeSlots > 0) {
                 List<Submission> shortAnswerTasks = taskService.claimShortAnswerTasks(freeSlots);
-                dispatch(shortAnswerTasks, this::gradeShortAnswer);
+                dispatch(shortAnswerTasks, this::gradeShortAnswerForPolling);
             }
         } catch (RuntimeException exception) {
             log.error("领取判题任务失败", exception);
@@ -133,7 +142,38 @@ public class JudgeWorker {
         }
     }
 
-    private void judgeOj(Submission submission) {
+    /**
+     * 轮询路径的包装：可重试异常在 V1 下仍按原行为直接标记失败。
+     */
+    private void judgeOjForPolling(Submission submission) {
+        try {
+            judgeOj(submission);
+        } catch (TaskRetryableException exception) {
+            completeFailedQuietly(submission.getId(), exception.getReason());
+        }
+    }
+
+    private void gradeShortAnswerForPolling(Submission submission) {
+        try {
+            gradeShortAnswer(submission);
+        } catch (TaskRetryableException exception) {
+            completeFailedQuietly(submission.getId(), exception.getReason());
+        }
+    }
+
+    private void completeFailedQuietly(Long submissionId, String reason) {
+        try {
+            resultService.complete(submissionId, JudgeOutcome.failed(reason));
+        } catch (RuntimeException exception) {
+            log.error("标记判题失败状态异常: submissionId={}", submissionId, exception);
+        }
+    }
+
+    /**
+     * 执行一次 OJ 判题。可由轮询线程或 MQ 消费者调用；
+     * 临时性故障抛出 TaskRetryableException，由调用方决定重试或落失败。
+     */
+    public void judgeOj(Submission submission) {
         try {
             Problem problem = problemMapper.selectById(submission.getProblemId());
             if (problem == null || problem.getDeletedAt() != null
@@ -183,12 +223,10 @@ public class JudgeWorker {
         } catch (GoJudgeClient.GoJudgeException exception) {
             log.warn("判题沙箱不可用: submissionId={}, reason={}",
                     submission.getId(), exception.getMessage());
-            resultService.complete(submission.getId(),
-                    JudgeOutcome.failed("判题服务暂不可用，请稍后重新提交"));
+            throw new TaskRetryableException("判题服务暂不可用，请稍后重新提交");
         } catch (RuntimeException exception) {
             log.error("判题异常: submissionId={}", submission.getId(), exception);
-            resultService.complete(submission.getId(),
-                    JudgeOutcome.failed("判题失败，请稍后重新提交"));
+            throw new TaskRetryableException("判题失败，请稍后重新提交");
         }
     }
 
@@ -231,7 +269,10 @@ public class JudgeWorker {
                 toInteger(maxTimeMs), toInteger(maxMemoryKb)));
     }
 
-    private void gradeShortAnswer(Submission submission) {
+    /**
+     * 执行一次简答判分。可由轮询线程或 MQ 消费者调用。
+     */
+    public void gradeShortAnswer(Submission submission) {
         try {
             Problem problem = problemMapper.selectById(submission.getProblemId());
             if (problem == null || problem.getDeletedAt() != null
@@ -261,12 +302,10 @@ public class JudgeWorker {
         } catch (PlatformLlmClient.LlmGradingException exception) {
             log.warn("简答判分失败: submissionId={}, reason={}",
                     submission.getId(), exception.getMessage());
-            resultService.complete(submission.getId(),
-                    JudgeOutcome.failed("简答判分服务暂不可用，请稍后重新提交"));
+            throw new TaskRetryableException("简答判分服务暂不可用，请稍后重新提交");
         } catch (RuntimeException exception) {
             log.error("简答判分异常: submissionId={}", submission.getId(), exception);
-            resultService.complete(submission.getId(),
-                    JudgeOutcome.failed("简答判分失败，请稍后重新提交"));
+            throw new TaskRetryableException("简答判分失败，请稍后重新提交");
         }
     }
 

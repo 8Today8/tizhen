@@ -24,6 +24,9 @@ import com.tizhen.core.datagen.model.DataGenTaskListItem;
 import com.tizhen.core.datagen.model.DataRangeItem;
 import com.tizhen.core.datagen.model.DownloadPayload;
 import com.tizhen.core.infra.file.FileStorage;
+import com.tizhen.core.mq.TaskCreatedEvent;
+import com.tizhen.core.mq.TaskType;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.dao.DuplicateKeyException;
@@ -74,19 +77,22 @@ public class DataGenService {
     private final DataGenRateLimiter rateLimiter;
     private final FileStorage fileStorage;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public DataGenService(DataGenTaskMapper dataGenTaskMapper,
                           DataGenFileMapper dataGenFileMapper,
                           LlmCredentialService llmCredentialService,
                           DataGenRateLimiter rateLimiter,
                           FileStorage fileStorage,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          ApplicationEventPublisher eventPublisher) {
         this.dataGenTaskMapper = dataGenTaskMapper;
         this.dataGenFileMapper = dataGenFileMapper;
         this.llmCredentialService = llmCredentialService;
         this.rateLimiter = rateLimiter;
         this.fileStorage = fileStorage;
         this.objectMapper = objectMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     public DataGenOptions options(Long userId) {
@@ -179,6 +185,8 @@ public class DataGenService {
         } catch (DuplicateKeyException exception) {
             throw new BusinessException(ErrorCode.DATAGEN_ACTIVE_TASK_EXISTS);
         }
+        // 事务提交后才投递，避免消费者先于任务可见；投递失败由补偿扫描兜底。
+        eventPublisher.publishEvent(new TaskCreatedEvent(task.getId(), TaskType.DATAGEN));
         return detail(userId, task.getId());
     }
 

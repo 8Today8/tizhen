@@ -53,6 +53,19 @@ public class DataGenTaskStateService {
         return tasks;
     }
 
+    /**
+     * 按 id 领取任务。allowInProgress 用于重试消息与 broker 重投；
+     * 更新 0 行说明任务已完成、已被其他消费者领取或已达到尝试上限。
+     */
+    @Transactional
+    public DataGenTask claimById(Long taskId, boolean allowInProgress, int maxAttempts) {
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        int updated = allowInProgress
+                ? dataGenTaskMapper.claimInProgressById(taskId, now, maxAttempts)
+                : dataGenTaskMapper.claimPendingById(taskId, now);
+        return updated == 1 ? dataGenTaskMapper.selectById(taskId) : null;
+    }
+
     @Transactional
     public void heartbeat(Long taskId) {
         DataGenTask task = new DataGenTask();

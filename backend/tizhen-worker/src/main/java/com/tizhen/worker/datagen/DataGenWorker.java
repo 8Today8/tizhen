@@ -12,6 +12,7 @@ import com.tizhen.core.datagen.model.DataRangeItem;
 import com.tizhen.core.llm.LlmProviderRegistry;
 import com.tizhen.core.llm.UserLlmClient;
 import com.tizhen.core.llm.UserLlmClient.LlmCallException;
+import com.tizhen.core.mq.TaskRetryableException;
 import com.tizhen.worker.judge.GoJudgeClient;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -39,8 +40,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 造数据任务消费者。随机、LLM 构造与 LLM 直接生成三种模式共用同一套
- * 沙箱执行与文件落地流程；LLM 输出一律视为不可信输入。
+ * 造数据任务执行器。V1 通过数据库任务表轮询领取，V2 由 MQ 消费者按 id 调用；
+ * 随机、LLM 构造与 LLM 直接生成三种模式共用同一套沙箱执行与文件落地流程，
+ * LLM 输出一律视为不可信输入。
  */
 @Component
 public class DataGenWorker {
@@ -96,6 +98,7 @@ public class DataGenWorker {
     private final int concurrency;
     private final int maxAttempts;
     private final long staleSeconds;
+    private final boolean mqEnabled;
 
     public DataGenWorker(DataGenTaskStateService stateService,
                          DataGenTaskMapper dataGenTaskMapper,
@@ -106,7 +109,9 @@ public class DataGenWorker {
                          com.tizhen.core.infra.file.FileStorage fileStorage,
                          ObjectMapper objectMapper,
                          @Value("${worker.datagen-concurrency:2}") int concurrency,
-                         @Value("${worker.datagen-stale-seconds:900}") long staleSeconds) {
+                         @Value("${worker.datagen-stale-seconds:900}") long staleSeconds,
+                         @Value("${worker.datagen-max-attempts:2}") int maxAttempts,
+                         @Value("${tizhen.mq.enabled:false}") boolean mqEnabled) {
         this.stateService = stateService;
         this.dataGenTaskMapper = dataGenTaskMapper;
         this.llmCredentialService = llmCredentialService;
@@ -116,13 +121,18 @@ public class DataGenWorker {
         this.fileStorage = fileStorage;
         this.objectMapper = objectMapper;
         this.concurrency = Math.max(concurrency, 1);
-        this.maxAttempts = 2;
+        this.maxAttempts = Math.max(maxAttempts, 1);
         this.staleSeconds = Math.max(staleSeconds, 120);
+        this.mqEnabled = mqEnabled;
         this.executor = Executors.newFixedThreadPool(this.concurrency, threadFactory());
     }
 
     @Scheduled(fixedDelayString = "${worker.datagen-poll-interval-ms:1000}")
     public void poll() {
+        // MQ 模式下由消费者驱动执行；轮询保留为关闭开关后的回退路径。
+        if (mqEnabled) {
+            return;
+        }
         int freeSlots = concurrency - activeTasks.get();
         if (freeSlots <= 0) {
             return;
@@ -133,7 +143,7 @@ public class DataGenWorker {
                 activeTasks.incrementAndGet();
                 executor.submit(() -> {
                     try {
-                        process(task);
+                        processForPolling(task);
                     } finally {
                         activeTasks.decrementAndGet();
                     }
@@ -179,7 +189,27 @@ public class DataGenWorker {
         executor.shutdownNow();
     }
 
-    private void process(DataGenTask task) {
+    /**
+     * 轮询路径的包装：可重试异常在 V1 下仍按原行为直接标记失败。
+     */
+    private void processForPolling(DataGenTask task) {
+        try {
+            process(task);
+        } catch (TaskRetryableException exception) {
+            String stage = exception.getStage() == null ? "system" : exception.getStage();
+            try {
+                stateService.fail(task.getId(), stage, exception.getReason());
+            } catch (RuntimeException failException) {
+                log.error("标记造数据任务失败状态异常: taskId={}", task.getId(), failException);
+            }
+        }
+    }
+
+    /**
+     * 执行一次造数据任务。可由轮询线程或 MQ 消费者调用；
+     * 临时性故障抛出 TaskRetryableException，由调用方决定重试或落失败。
+     */
+    public void process(DataGenTask task) {
         List<String> storedKeys = new ArrayList<>();
         try {
             List<DataRangeItem> ranges = parseRanges(task.getDataRange());
@@ -258,12 +288,16 @@ public class DataGenWorker {
             stateService.fail(task.getId(), failureStage(task), exception.getMessage());
         } catch (GoJudgeClient.GoJudgeException exception) {
             cleanupStored(storedKeys);
-            stateService.fail(task.getId(), "system", "判题沙箱不可用，请稍后重新提交");
             log.warn("造数据沙箱不可用: taskId={}, reason={}", task.getId(), exception.getMessage());
+            throw new TaskRetryableException("system", "判题沙箱不可用，请稍后重试");
+        } catch (TaskRetryableException exception) {
+            // 已带具体阶段与原因的临时故障，直接上抛，避免被下面的兜底包装成 system。
+            cleanupStored(storedKeys);
+            throw exception;
         } catch (RuntimeException exception) {
             cleanupStored(storedKeys);
-            stateService.fail(task.getId(), "system", "造数据任务执行异常，请重新提交");
             log.error("造数据任务异常: taskId={}", task.getId(), exception);
+            throw new TaskRetryableException("system", "造数据任务执行异常，请稍后重试");
         }
     }
 
@@ -352,14 +386,20 @@ public class DataGenWorker {
     }
 
     private void handleLlmFailure(DataGenTask task, LlmCallException exception) {
-        if (exception.isAuthFailure() && task.getLlmCredentialId() != null) {
-            try {
-                llmCredentialService.markInvalid(task.getLlmCredentialId(), exception.getMessage());
-            } catch (RuntimeException markException) {
-                log.warn("标记 LLM 凭证失效失败: taskId={}", task.getId());
+        if (exception.isAuthFailure()) {
+            if (task.getLlmCredentialId() != null) {
+                try {
+                    llmCredentialService.markInvalid(task.getLlmCredentialId(), exception.getMessage());
+                } catch (RuntimeException markException) {
+                    log.warn("标记 LLM 凭证失效失败: taskId={}", task.getId());
+                }
             }
+            // 凭证失效重试也不会成功，直接落失败；限流、超时等临时故障交给重试队列。
+            stateService.fail(task.getId(), failureStage(task),
+                    "LLM 调用失败：" + exception.getMessage());
+            return;
         }
-        stateService.fail(task.getId(), failureStage(task),
+        throw new TaskRetryableException(failureStage(task),
                 "LLM 调用失败：" + exception.getMessage());
     }
 
